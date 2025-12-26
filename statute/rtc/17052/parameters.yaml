@@ -1,56 +1,200 @@
-# California Revenue and Taxation Code § 17052
+# California Revenue and Taxation Code Section 17052
 # California Earned Income Tax Credit (CalEITC) Parameters
 #
 # Source: FTB CalEITC Eligibility and Credit Information
-# https://www.ftb.ca.gov/file/personal/credits/caleitc/eligibility-and-credit-information.html
+# Reference: https://www.ftb.ca.gov/file/personal/credits/caleitc/eligibility-and-credit-information.html
+#
+# CalEITC is a refundable tax credit for low-income working Californians.
+# Parameters are adjusted annually for inflation.
 
-variable: caleitc
-description: CalEITC credit amounts and thresholds
+metadata:
+  statute: "CA RTC 17052"
+  description: "CalEITC credit amounts, rates, and thresholds"
+  reference:
+    - "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17052&lawCode=RTC"
+    - "https://www.ftb.ca.gov/file/personal/credits/caleitc/eligibility-and-credit-information.html"
 
-# 2024 Tax Year
-# Source: FTB 2024 Form 3514 Instructions
-2024:
-  # Maximum credit amounts by number of qualifying children
-  max_credit:
-    0: 294      # No qualifying children
-    1: 1958     # 1 qualifying child
-    2: 3239     # 2 qualifying children
-    3: 3644     # 3 or more qualifying children
+# =============================================================================
+# Maximum Credit Amounts by Number of Qualifying Children
+# =============================================================================
 
-  # Maximum income limits (earned income and AGI)
-  max_income: 31950
+gov.ca.ftb.caleitc.max_credit:
+  description: "CalEITC maximum credit amounts by number of qualifying children"
+  unit: "USD"
 
-  # Investment income disqualification threshold
-  investment_income_limit: 4674
+  values:
+    2023-01-01:
+      children_0: 285
+      children_1: 1900
+      children_2: 3137
+      children_3_plus: 3529
 
-  # Phase-out start thresholds (earned income)
-  # Credit begins phasing out after these amounts
-  phaseout_start:
-    0: 4525     # No children
-    1: 6794     # 1 child
-    2: 9537     # 2+ children
+    2024-01-01:
+      children_0: 294
+      children_1: 1958
+      children_2: 3239
+      children_3_plus: 3644
 
-  # Minimum earned income requirement
-  min_earned_income: 1
+    # 2025 Projected (3.1% CCPI adjustment)
+    2025-01-01:
+      children_0: 303       # 294 * 1.031
+      children_1: 2019      # 1958 * 1.031
+      children_2: 3339      # 3239 * 1.031
+      children_3_plus: 3757 # 3644 * 1.031
 
-# 2023 Tax Year (for reference)
-2023:
-  max_credit:
-    0: 285
-    1: 1900
-    2: 3137
-    3: 3529
-  max_income: 30950
-  investment_income_limit: 4525
-  phaseout_start:
-    0: 4384
-    1: 6586
-    2: 9244
+    # 2026 Projected (2.5% inflation adjustment)
+    2026-01-01:
+      children_0: 311       # 303 * 1.025
+      children_1: 2069      # 2019 * 1.025
+      children_2: 3423      # 3339 * 1.025
+      children_3_plus: 3851 # 3757 * 1.025
 
-# Notes:
-# - CalEITC is fully refundable
-# - Must have valid SSN or ITIN
+  reference: "FTB Form 3514 Instructions"
+
+# =============================================================================
+# Income Limits
+# =============================================================================
+
+gov.ca.ftb.caleitc.max_income:
+  description: "Maximum earned income/AGI to qualify for CalEITC"
+  unit: "USD"
+
+  values:
+    2023-01-01: 30950
+    2024-01-01: 31950
+    2025-01-01: 32940    # Projected 3.1% increase
+    2026-01-01: 33764    # Projected 2.5% increase
+
+  reference: "CA RTC 17052, FTB Form 3514"
+
+gov.ca.ftb.caleitc.investment_income_limit:
+  description: "Maximum investment income allowed to qualify for CalEITC"
+  unit: "USD"
+
+  values:
+    2023-01-01: 4525
+    2024-01-01: 4674
+    2025-01-01: 4819     # Projected 3.1% increase
+    2026-01-01: 4939     # Projected 2.5% increase
+
+  reference: "CA RTC 17052(e)"
+
+gov.ca.ftb.caleitc.min_earned_income:
+  description: "Minimum earned income required for CalEITC"
+  unit: "USD"
+
+  values:
+    2015-01-01: 1        # Must have at least $1 of earned income
+
+  reference: "CA RTC 17052(a)"
+
+# =============================================================================
+# Phase-In Rates
+# These rates determine how quickly the credit builds up with earned income
+# =============================================================================
+
+gov.ca.ftb.caleitc.phase_in_rate:
+  description: "CalEITC phase-in rates by number of qualifying children"
+  unit: "/1"
+
+  values:
+    2024-01-01:
+      children_0: 0.0650     # 6.5% for no children
+      children_1: 0.2881     # 28.81% for 1 child
+      children_2: 0.3395     # 33.95% for 2 children
+      children_3_plus: 0.3822 # 38.22% for 3+ children
+
+    # Phase-in rates typically stable year to year
+    2025-01-01:
+      children_0: 0.0650
+      children_1: 0.2881
+      children_2: 0.3395
+      children_3_plus: 0.3822
+
+    2026-01-01:
+      children_0: 0.0650
+      children_1: 0.2881
+      children_2: 0.3395
+      children_3_plus: 0.3822
+
+  reference: "FTB Form 3514 Credit Table"
+
+# =============================================================================
+# Phase-Out Start Thresholds
+# Credit begins phasing out after these income amounts
+# =============================================================================
+
+gov.ca.ftb.caleitc.phaseout_start:
+  description: "Income thresholds where CalEITC phase-out begins"
+  unit: "USD"
+
+  values:
+    2023-01-01:
+      children_0: 4384
+      children_1: 6586
+      children_2_plus: 9244
+
+    2024-01-01:
+      children_0: 4525
+      children_1: 6794
+      children_2_plus: 9537
+
+    # 2025 Projected
+    2025-01-01:
+      children_0: 4665     # 4525 * 1.031
+      children_1: 7005     # 6794 * 1.031
+      children_2_plus: 9833 # 9537 * 1.031
+
+    # 2026 Projected
+    2026-01-01:
+      children_0: 4782     # 4665 * 1.025
+      children_1: 7180     # 7005 * 1.025
+      children_2_plus: 10079 # 9833 * 1.025
+
+  reference: "FTB Form 3514 Credit Table"
+
+# =============================================================================
+# Phase-Out Rates
+# These rates determine how quickly the credit decreases after phaseout threshold
+# =============================================================================
+
+gov.ca.ftb.caleitc.phase_out_rate:
+  description: "CalEITC phase-out rates by number of qualifying children"
+  unit: "/1"
+
+  values:
+    2024-01-01:
+      children_0: 0.0107     # 1.07% for no children
+      children_1: 0.0778     # 7.78% for 1 child
+      children_2: 0.1470     # 14.70% for 2 children
+      children_3_plus: 0.1627 # 16.27% for 3+ children
+
+    # Phase-out rates typically stable year to year
+    2025-01-01:
+      children_0: 0.0107
+      children_1: 0.0778
+      children_2: 0.1470
+      children_3_plus: 0.1627
+
+    2026-01-01:
+      children_0: 0.0107
+      children_1: 0.0778
+      children_2: 0.1470
+      children_3_plus: 0.1627
+
+  reference: "FTB Form 3514 Credit Table"
+
+# =============================================================================
+# Additional Eligibility Rules (Non-Parameterized)
+# =============================================================================
+
+# Notes on CalEITC eligibility:
+# - Must have valid SSN or ITIN (cannot use ATIN)
 # - Must be CA resident for more than half the year
 # - Must be at least 18 years old OR have a qualifying child
-# - Earned income includes wages, self-employment income
-# - Earned income does NOT include unemployment, disability, etc.
+# - Cannot file as married filing separately (unless certain conditions met)
+# - Cannot be claimed as dependent on another return
+# - Earned income includes wages, salaries, tips, and net self-employment income
+# - Earned income does NOT include unemployment, disability, Social Security
+# - CalEITC is fully refundable
+# - Can be claimed in addition to federal EITC

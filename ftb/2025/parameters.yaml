@@ -1,129 +1,126 @@
-# California Franchise Tax Board - 2024 Tax Year Parameters
+# California Franchise Tax Board - 2025 Tax Year Parameters (Projected)
 #
-# Consolidated parameters file for California 2024 tax year.
-# This file provides a summary reference; authoritative values are in
-# the statute-specific parameter files under statute/rtc/.
+# Consolidated parameters file for California 2025 tax year.
+# These values are PROJECTED based on ~3.1% CA CCPI inflation adjustment.
+# Official values will be published by FTB in late 2024.
 #
-# Source: FTB Form 540 Booklet and related forms
-# https://www.ftb.ca.gov/forms/2024/2024-540-booklet.html
+# Source: Projected from 2024 values using CA CCPI
+# Note: See statute/rtc/ parameter files for authoritative values
 
 metadata:
-  tax_year: 2024
+  tax_year: 2025
   jurisdiction: CA
   source:
-    agency: California Franchise Tax Board
+    agency: California Franchise Tax Board (projected)
     url: https://www.ftb.ca.gov
-    effective_date: 2024-01-01
-  note: "See statute/rtc/ parameter files for authoritative values"
+    effective_date: 2025-01-01
+  note: "PROJECTED values - official values to be published by FTB"
+  inflation_adjustment: 0.031  # 3.1% CA CCPI
 
 # =============================================================================
 # Standard Deduction (RTC 17054)
-# Authoritative: statute/rtc/17054/parameters.yaml
+# Projected ~3.1% increase
 # =============================================================================
 standard_deduction:
-  single: 5540
-  married_filing_jointly: 11080
-  married_filing_separately: 5540
-  head_of_household: 11080
-  qualifying_surviving_spouse: 11080
+  single: 5712               # 5,540 * 1.031
+  married_filing_jointly: 11424  # 11,080 * 1.031
+  married_filing_separately: 5712
+  head_of_household: 11424
+  qualifying_surviving_spouse: 11424
 
 # =============================================================================
 # Personal Exemption Credits (RTC 17054.5)
-# California uses exemption CREDITS, not deductions
 # =============================================================================
 exemption_credit:
-  single: 144
-  married_filing_jointly: 288  # $144 x 2
-  head_of_household: 144
-  dependent: 446  # Per dependent
+  single: 148                # 144 * 1.031
+  married_filing_jointly: 296
+  head_of_household: 148
+  dependent: 460             # 446 * 1.031
 
 # =============================================================================
 # Mental Health Services Tax (RTC 17043)
-# Authoritative: statute/rtc/17043/parameters.yaml
+# Fixed in statute - NOT indexed for inflation
 # =============================================================================
 mhs_tax:
-  threshold: 1000000  # Fixed since 2005, not indexed
+  threshold: 1000000  # Fixed since 2005
   rate: 0.01          # 1%
 
 # =============================================================================
 # CalEITC (RTC 17052)
-# Authoritative: statute/rtc/17052/parameters.yaml
+# Projected ~3.1% increase
 # =============================================================================
 caleitc:
   max_credit:
-    children_0: 294
-    children_1: 1958
-    children_2: 3239
-    children_3_plus: 3644
-  max_income: 31950
-  investment_income_limit: 4674
+    children_0: 303          # 294 * 1.031
+    children_1: 2019         # 1,958 * 1.031
+    children_2: 3339         # 3,239 * 1.031
+    children_3_plus: 3757    # 3,644 * 1.031
+  max_income: 32940          # 31,950 * 1.031
+  investment_income_limit: 4819  # 4,674 * 1.031
   min_earned_income: 1
 
 # =============================================================================
 # Young Child Tax Credit (RTC 17052.1)
-# Authoritative: statute/rtc/17052.1/parameters.yaml
+# Projected ~3.1% increase
 # =============================================================================
 yctc:
-  max_credit: 1154
-  income_threshold: 26626
-  max_income: 32900
+  max_credit: 1189           # 1,154 * 1.031
+  income_threshold: 27438    # 26,626 * 1.031
+  max_income: 33951          # 32,900 * 1.031
   child_age_limit: 6
-  reduction_per_100: 21.67
+  reduction_per_100: 21.67   # Stable
 
 # =============================================================================
 # Foster Youth Tax Credit (RTC 17052.2)
 # =============================================================================
 fytc:
-  max_credit: 1154
+  max_credit: 1189           # Same as YCTC
   age_minimum: 18
   age_maximum: 25
 
 # =============================================================================
 # Renter's Credit (RTC 17081)
-# Authoritative: statute/rtc/17081/parameters.yaml
+# Credit amount frozen, AGI limits indexed
 # =============================================================================
 renters_credit:
   amount:
-    single: 60
+    single: 60               # Frozen since 1979
     married_filing_jointly: 120
   agi_limit:
-    single: 50746
-    married_filing_jointly: 101492
+    single: 52319            # 50,746 * 1.031
+    married_filing_jointly: 104638  # 101,492 * 1.031
 
 # =============================================================================
 # Alternative Minimum Tax (RTC 17062)
 # =============================================================================
 amt:
-  exemption_single: 95853
-  exemption_joint: 127811
-  exemption_separate: 63905
-  phaseout_single: 366550
-  phaseout_joint: 488737
-  rate: 0.07  # 7%
+  exemption_single: 98824    # 95,853 * 1.031
+  exemption_joint: 131770    # 127,811 * 1.031
+  exemption_separate: 65887  # 63,905 * 1.031
+  phaseout_single: 377873    # 366,550 * 1.031
+  phaseout_joint: 503885     # 488,737 * 1.031
+  rate: 0.07
 
 # =============================================================================
 # Tax Filing Thresholds
 # =============================================================================
 filing_threshold:
-  single: 22661
-  married_filing_jointly: 45322
-  head_of_household: 34094
-  dependent: 6954
+  single: 23364              # 22,661 * 1.031
+  married_filing_jointly: 46727  # 45,322 * 1.031
+  head_of_household: 35151   # 34,094 * 1.031
+  dependent: 7170            # 6,954 * 1.031
 
 # =============================================================================
 # State Disability Insurance (SDI)
 # =============================================================================
 sdi:
-  rate: 0.009  # 0.9% (increased from prior years)
-  wage_limit: 153164
+  rate: 0.009                # Subject to change
+  wage_limit: 157911         # 153,164 * 1.031 (projected)
 
 # =============================================================================
 # Income Tax Rate Brackets (RTC 17041)
-# Authoritative: statute/rtc/17041/parameters.yaml
+# Rates fixed, thresholds indexed
 # =============================================================================
-# See statute/rtc/17041/parameters.yaml for complete bracket tables
-# Summary: 9 brackets from 1% to 12.3%
-# Plus 1% MHS tax on income over $1M = 13.3% top marginal rate
 income_tax_rates:
   - 0.01     # 1%
   - 0.02     # 2%
@@ -134,3 +131,4 @@ income_tax_rates:
   - 0.103    # 10.3%
   - 0.113    # 11.3%
   - 0.123    # 12.3%
+# See statute/rtc/17041/parameters.yaml for complete bracket thresholds

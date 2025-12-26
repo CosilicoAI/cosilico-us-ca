@@ -1,40 +1,76 @@
-# California Revenue and Taxation Code § 17054
+# California Revenue and Taxation Code Section 17054
 # Standard Deduction
 #
 # California provides a standard deduction that is significantly
 # lower than the federal standard deduction. Taxpayers choose between
 # the standard deduction and itemized deductions.
 #
-# For 2024:
-# - Single or Married Filing Separately: $5,540
-# - Married Filing Jointly, Head of Household, Qualifying Widow(er): $11,080
+# The standard deduction is adjusted annually for inflation based on
+# the California Consumer Price Index (CCPI).
+#
+# Reference: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17054&lawCode=RTC
 
-imports:
-  filing_status: statute/rtc/17041/filing_status
+module statute.rtc.17054
+version "2025.1"
+jurisdiction ca
 
-parameters:
-  # Standard deduction amounts from parameters.yaml
-  single_amount: parameters#2024.single
-  joint_amount: parameters#2024.married_filing_jointly
+references {
+  # Dependencies
+  ca_filing_status: statute/rtc/17041/ca_filing_status
+}
 
-entity TaxUnit
-period Year
-dtype Money
-unit "USD"
-label "California Standard Deduction"
-description "Standard deduction per RTC § 17054"
+# California Standard Deduction
+variable ca_standard_deduction {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "California Standard Deduction"
+  description "Standard deduction per RTC 17054"
+  reference (
+    "CA RTC 17054",
+    "https://www.ftb.ca.gov/forms/2024/2024-540-booklet.html"
+  )
 
-formula:
-  match filing_status {
-    SINGLE => single_amount
-    MARRIED_FILING_SEPARATELY => single_amount
-    MARRIED_FILING_JOINTLY => joint_amount
-    HEAD_OF_HOUSEHOLD => joint_amount
-    QUALIFYING_WIDOW => joint_amount
+  formula {
+    let filing_status = variable(ca_filing_status)
+    let p = parameter(gov.ca.ftb.standard_deduction)
+
+    match filing_status {
+      SINGLE => p.single
+      MARRIED_FILING_SEPARATELY => p.married_filing_separately
+      MARRIED_FILING_JOINTLY => p.married_filing_jointly
+      HEAD_OF_HOUSEHOLD => p.head_of_household
+      QUALIFYING_SURVIVING_SPOUSE => p.qualifying_surviving_spouse
+    }
   }
 
-defined_for:
-  # All filers can claim the standard deduction
-  true
+  defined_for {
+    # All filers can claim the standard deduction
+    true
+  }
 
-default 0
+  default 0
+}
+
+# Additional standard deduction for blind or elderly
+# California does not have an additional standard deduction for age/blindness
+# (unlike federal), but instead provides exemption credits
+# This variable is included for completeness and returns 0
+variable ca_additional_standard_deduction {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "California Additional Standard Deduction"
+  description "Additional standard deduction for age 65+ or blind (N/A in CA - use exemption credits instead)"
+  reference "CA RTC 17054"
+
+  formula {
+    # California does not provide additional standard deduction for age/blindness
+    # Instead, California uses personal exemption credits (RTC 17054.5)
+    return 0
+  }
+
+  default 0
+}

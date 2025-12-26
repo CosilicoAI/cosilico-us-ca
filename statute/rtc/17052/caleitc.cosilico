@@ -1,84 +1,280 @@
-# California Revenue and Taxation Code § 17052
+# California Revenue and Taxation Code Section 17052
 # California Earned Income Tax Credit (CalEITC)
 #
 # CalEITC provides a refundable tax credit for low-income working
-# individuals and families. It was enacted in 2015 and significantly
-# expanded in subsequent years.
+# individuals and families. Enacted in 2015 and significantly
+# expanded in subsequent years to include self-employment income
+# and higher income limits.
 #
-# For 2024:
-# - Maximum credit: $3,644 (3+ qualifying children)
-# - Income limit: $31,950
+# Key features:
+# - Fully refundable credit
 # - Must have earned income of at least $1
+# - Must be CA resident for more than half the year
+# - Investment income cannot exceed threshold (~$4,674 for 2024)
+# - Must have valid SSN or ITIN
+#
+# Reference: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17052&lawCode=RTC
 
-imports:
-  earned_income: statute/rtc/17052/earned_income
-  agi: statute/rtc/17041/california_agi
-  num_qualifying_children: statute/rtc/17052/num_qualifying_children
-  investment_income: statute/rtc/17052/investment_income
+module statute.rtc.17052
+version "2025.1"
+jurisdiction ca
 
-parameters:
-  # Maximum credit amounts by number of qualifying children
-  max_credit: parameters#2024.max_credit
+references {
+  # Dependencies
+  ca_agi: statute/rtc/17041/ca_adjusted_gross_income
+  ca_filing_status: statute/rtc/17041/ca_filing_status
+}
 
-  # Income thresholds
-  max_income: parameters#2024.max_income
-  investment_income_limit: parameters#2024.investment_income_limit
+# Earned income for CalEITC purposes
+# Includes wages, salaries, tips, and net self-employment income
+variable ca_caleitc_earned_income {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "CalEITC Earned Income"
+  description "Earned income for California EITC purposes (wages + self-employment)"
+  reference "CA RTC 17052(b)"
 
-  # Phase-out thresholds
-  phaseout_start: parameters#2024.phaseout_start
+  formula {
+    let wages = variable(wages_salaries_tips)
+    let se_income = variable(net_self_employment_income)
 
-entity TaxUnit
-period Year
-dtype Money
-unit "USD"
-label "California Earned Income Tax Credit"
-description "CalEITC per RTC § 17052"
-
-formula:
-  # Disqualified if investment income exceeds limit
-  if investment_income > investment_income_limit then
-    return 0
-
-  # Must have earned income between $1 and max income
-  if earned_income < 1 or earned_income > max_income then
-    return 0
-
-  # AGI must also be within limits
-  if agi > max_income then
-    return 0
-
-  # Get max credit based on number of qualifying children
-  credit_amount = match num_qualifying_children {
-    0 => max_credit[0]
-    1 => max_credit[1]
-    2 => max_credit[2]
-    _ => max_credit[3]  # 3 or more children
+    # CalEITC includes net self-employment income (added in 2017)
+    return max(0, wages + se_income)
   }
 
-  # Phase-in: credit builds up as earned income increases
-  # Phase-out: credit decreases as income exceeds threshold
-  # The actual calculation uses a lookup table from FTB 3514
+  default 0
+}
 
-  # Get phase-out threshold based on number of children
-  phaseout_threshold = match num_qualifying_children {
-    0 => phaseout_start[0]
-    1 => phaseout_start[1]
-    _ => phaseout_start[2]  # 2+ children
+# Investment income for CalEITC disqualification test
+variable ca_caleitc_investment_income {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "CalEITC Investment Income"
+  description "Investment income for CalEITC disqualification test"
+  reference "CA RTC 17052(e)"
+
+  formula {
+    let interest = variable(taxable_interest_income)
+    let dividends = variable(dividend_income)
+    let capital_gains = variable(net_capital_gains)
+    let rental = variable(rental_income)
+
+    return interest + dividends + max(0, capital_gains) + rental
   }
 
-  # Simplified calculation (actual uses detailed credit table)
-  # Credit phases out after the phaseout threshold
-  if earned_income <= phaseout_threshold then
-    return credit_amount
-  else
-    # Phase-out reduces credit proportionally
-    reduction_income = earned_income - phaseout_threshold
-    phaseout_range = max_income - phaseout_threshold
-    reduction_rate = credit_amount / phaseout_range
-    reduced_credit = credit_amount - (reduction_income * reduction_rate)
-    return max(0, reduced_credit)
+  default 0
+}
 
-defined_for:
-  earned_income >= 1
+# Number of qualifying children for CalEITC
+variable ca_caleitc_num_qualifying_children {
+  entity TaxUnit
+  period Year
+  dtype Count
+  unit "children"
+  label "CalEITC Qualifying Children"
+  description "Number of qualifying children for CalEITC purposes"
+  reference "CA RTC 17052(c)"
 
-default 0
+  formula {
+    # CalEITC qualifying child rules similar to federal EITC
+    # Child must be under 19 (or under 24 if student)
+    # Must live with taxpayer for more than half the year
+    # Must be CA resident
+    return variable(num_eitc_qualifying_children)
+  }
+
+  default 0
+}
+
+# CalEITC eligibility check
+variable ca_caleitc_eligible {
+  entity TaxUnit
+  period Year
+  dtype Bool
+  unit "boolean"
+  label "CalEITC Eligible"
+  description "Whether tax unit is eligible for CalEITC"
+  reference "CA RTC 17052(a)"
+
+  formula {
+    let earned_income = variable(ca_caleitc_earned_income)
+    let agi = variable(ca_agi)
+    let investment_income = variable(ca_caleitc_investment_income)
+    let p = parameter(gov.ca.ftb.caleitc)
+
+    # Disqualified if investment income exceeds limit
+    if investment_income > p.investment_income_limit then
+      return false
+
+    # Must have earned income of at least $1
+    if earned_income < p.min_earned_income then
+      return false
+
+    # Earned income and AGI must be within limits
+    if earned_income > p.max_income or agi > p.max_income then
+      return false
+
+    return true
+  }
+
+  default false
+}
+
+# CalEITC maximum credit amount based on number of children
+variable ca_caleitc_max_credit {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "CalEITC Maximum Credit"
+  description "Maximum CalEITC credit based on number of qualifying children"
+  reference "CA RTC 17052(b)"
+
+  formula {
+    let num_children = variable(ca_caleitc_num_qualifying_children)
+    let p = parameter(gov.ca.ftb.caleitc.max_credit)
+
+    match num_children {
+      0 => p.children_0
+      1 => p.children_1
+      2 => p.children_2
+      _ => p.children_3_plus  # 3 or more children
+    }
+  }
+
+  default 0
+}
+
+# CalEITC phase-in calculation
+variable ca_caleitc_phase_in_amount {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "CalEITC Phase-In Amount"
+  description "CalEITC credit amount during phase-in range"
+  reference "CA RTC 17052(b)"
+
+  formula {
+    let earned_income = variable(ca_caleitc_earned_income)
+    let num_children = variable(ca_caleitc_num_qualifying_children)
+    let p = parameter(gov.ca.ftb.caleitc)
+
+    # Get phase-in rate based on number of children
+    let phase_in_rate = match num_children {
+      0 => p.phase_in_rate.children_0
+      1 => p.phase_in_rate.children_1
+      2 => p.phase_in_rate.children_2
+      _ => p.phase_in_rate.children_3_plus
+    }
+
+    # Phase-in: credit increases as earned income increases
+    return earned_income * phase_in_rate
+  }
+
+  default 0
+}
+
+# CalEITC phase-out threshold based on number of children
+variable ca_caleitc_phaseout_threshold {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "CalEITC Phase-Out Threshold"
+  description "Income threshold where CalEITC phase-out begins"
+  reference "CA RTC 17052(b)"
+
+  formula {
+    let num_children = variable(ca_caleitc_num_qualifying_children)
+    let p = parameter(gov.ca.ftb.caleitc.phaseout_start)
+
+    match num_children {
+      0 => p.children_0
+      1 => p.children_1
+      _ => p.children_2_plus  # 2 or more children have same threshold
+    }
+  }
+
+  default 0
+}
+
+# CalEITC phase-out reduction
+variable ca_caleitc_phase_out_reduction {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "CalEITC Phase-Out Reduction"
+  description "Reduction in CalEITC credit during phase-out range"
+  reference "CA RTC 17052(b)"
+
+  formula {
+    let earned_income = variable(ca_caleitc_earned_income)
+    let agi = variable(ca_agi)
+    let phaseout_threshold = variable(ca_caleitc_phaseout_threshold)
+    let num_children = variable(ca_caleitc_num_qualifying_children)
+    let p = parameter(gov.ca.ftb.caleitc)
+
+    # Use greater of earned income or AGI for phase-out
+    let income_for_phaseout = max(earned_income, agi)
+
+    # If below phaseout threshold, no reduction
+    if income_for_phaseout <= phaseout_threshold then
+      return 0
+
+    # Get phase-out rate based on number of children
+    let phase_out_rate = match num_children {
+      0 => p.phase_out_rate.children_0
+      1 => p.phase_out_rate.children_1
+      2 => p.phase_out_rate.children_2
+      _ => p.phase_out_rate.children_3_plus
+    }
+
+    let excess_income = income_for_phaseout - phaseout_threshold
+
+    return excess_income * phase_out_rate
+  }
+
+  default 0
+}
+
+# California Earned Income Tax Credit
+variable ca_caleitc {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "California Earned Income Tax Credit"
+  description "CalEITC refundable tax credit per RTC 17052"
+  reference (
+    "CA RTC 17052",
+    "https://www.ftb.ca.gov/file/personal/credits/caleitc/eligibility-and-credit-information.html"
+  )
+
+  formula {
+    # Check eligibility first
+    if not variable(ca_caleitc_eligible) then
+      return 0
+
+    let max_credit = variable(ca_caleitc_max_credit)
+    let phase_in = variable(ca_caleitc_phase_in_amount)
+    let phase_out_reduction = variable(ca_caleitc_phase_out_reduction)
+
+    # Credit is lesser of phase-in amount and max credit, minus phase-out reduction
+    let credit_before_phaseout = min(phase_in, max_credit)
+    let credit = credit_before_phaseout - phase_out_reduction
+
+    return max(0, credit)
+  }
+
+  defined_for {
+    variable(ca_caleitc_eligible)
+  }
+
+  default 0
+}

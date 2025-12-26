@@ -1,4 +1,4 @@
-# California Revenue and Taxation Code § 17041
+# California Revenue and Taxation Code Section 17041
 # Imposition of Tax - Personal Income Tax Rates
 #
 # "There shall be levied, collected, and paid for each taxable year
@@ -7,108 +7,197 @@
 # amount of taxable income..."
 #
 # California has 9 marginal tax brackets ranging from 1% to 12.3%.
-# This does NOT include the Mental Health Services Tax (RTC § 17043).
+# This does NOT include the Mental Health Services Tax (RTC Section 17043).
+#
+# Reference: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17041&lawCode=RTC
 
-imports:
-  taxable_income: statute/rtc/17041/california_taxable_income
-  filing_status: statute/rtc/17041/filing_status
+module statute.rtc.17041
+version "2025.1"
+jurisdiction ca
 
-parameters:
-  # Tax rates are fixed in statute (9 brackets: 1% to 12.3%)
-  rates: [0.01, 0.02, 0.04, 0.06, 0.08, 0.093, 0.103, 0.113, 0.123]
+references {
+  # External dependencies (from cosilico-us federal statutes)
+  federal_agi: cosilico-us/statute/26/62/a/adjusted_gross_income
 
-  # Bracket thresholds loaded from parameters.yaml
-  thresholds_single: parameters#2024.single.thresholds
-  thresholds_joint: parameters#2024.married_filing_jointly.thresholds
-  thresholds_hoh: parameters#2024.head_of_household.thresholds
-  thresholds_separate: parameters#2024.married_filing_separately.thresholds
-  thresholds_widow: parameters#2024.qualifying_widow.thresholds
+  # Internal references
+  ca_standard_deduction: statute/rtc/17054/standard_deduction
+  ca_itemized_deductions: statute/rtc/17201/itemized_deductions
+}
 
-function get_thresholds(filing_status: FilingStatus) -> Array[Money]:
-  match filing_status {
-    SINGLE => thresholds_single
-    MARRIED_FILING_JOINTLY => thresholds_joint
-    HEAD_OF_HOUSEHOLD => thresholds_hoh
-    MARRIED_FILING_SEPARATELY => thresholds_separate
-    QUALIFYING_WIDOW => thresholds_widow
+# Filing status enumeration for California
+variable ca_filing_status {
+  entity TaxUnit
+  period Year
+  dtype Enum
+  unit "category"
+  label "California Filing Status"
+  description "Filing status for California personal income tax purposes"
+  reference "CA RTC 17041"
+
+  values {
+    SINGLE = 1
+    MARRIED_FILING_JOINTLY = 2
+    MARRIED_FILING_SEPARATELY = 3
+    HEAD_OF_HOUSEHOLD = 4
+    QUALIFYING_SURVIVING_SPOUSE = 5
   }
 
-entity TaxUnit
-period Year
-dtype Money
-unit "USD"
-label "California Personal Income Tax"
-description "California state income tax per RTC § 17041 (excludes MHS tax)"
+  default SINGLE
+}
 
-formula:
-  thresholds = get_thresholds(filing_status)
+# California Adjusted Gross Income
+# California AGI generally conforms to federal AGI with modifications
+variable ca_adjusted_gross_income {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "California Adjusted Gross Income"
+  description "California AGI per RTC 17072 (conforms to federal with modifications)"
+  reference (
+    "CA RTC 17072",
+    "https://www.ftb.ca.gov/forms/2024/2024-540-booklet.html"
+  )
 
-  # Progressive marginal rate calculation
-  tax = 0
+  formula {
+    # California generally conforms to federal AGI
+    # Modifications handled in separate statute sections (RTC 17131-17145)
+    return federal_agi
+  }
 
-  # 1% bracket: $0 to threshold[1]
-  bracket_1 = min(taxable_income, thresholds[1]) - thresholds[0]
-  tax = tax + max(0, bracket_1) * 0.01
+  default 0
+}
 
-  # 2% bracket: threshold[1] to threshold[2]
-  bracket_2 = min(taxable_income, thresholds[2]) - thresholds[1]
-  tax = tax + max(0, bracket_2) * 0.02
+# California Taxable Income
+variable ca_taxable_income {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "California Taxable Income"
+  description "Taxable income for California state income tax"
+  reference "CA RTC 17041"
 
-  # 4% bracket: threshold[2] to threshold[3]
-  bracket_4 = min(taxable_income, thresholds[3]) - thresholds[2]
-  tax = tax + max(0, bracket_4) * 0.04
+  formula {
+    let agi = variable(ca_adjusted_gross_income)
+    let std_ded = variable(ca_standard_deduction)
+    let itemized = variable(ca_itemized_deductions)
 
-  # 6% bracket: threshold[3] to threshold[4]
-  bracket_6 = min(taxable_income, thresholds[4]) - thresholds[3]
-  tax = tax + max(0, bracket_6) * 0.06
+    # Taxpayer chooses greater of standard or itemized deductions
+    let deduction = max(std_ded, itemized)
 
-  # 8% bracket: threshold[4] to threshold[5]
-  bracket_8 = min(taxable_income, thresholds[5]) - thresholds[4]
-  tax = tax + max(0, bracket_8) * 0.08
+    return max(0, agi - deduction)
+  }
 
-  # 9.3% bracket: threshold[5] to threshold[6]
-  bracket_93 = min(taxable_income, thresholds[6]) - thresholds[5]
-  tax = tax + max(0, bracket_93) * 0.093
+  default 0
+}
 
-  # 10.3% bracket: threshold[6] to threshold[7]
-  bracket_103 = min(taxable_income, thresholds[7]) - thresholds[6]
-  tax = tax + max(0, bracket_103) * 0.103
+# Get bracket thresholds based on filing status
+function get_bracket_thresholds(filing_status: Enum, period: Year) -> Array[Money] {
+  let p = parameter(gov.ca.ftb.income_tax.brackets, period)
 
-  # 11.3% bracket: threshold[7] to threshold[8]
-  bracket_113 = min(taxable_income, thresholds[8]) - thresholds[7]
-  tax = tax + max(0, bracket_113) * 0.113
+  match filing_status {
+    SINGLE => p.single.thresholds
+    MARRIED_FILING_JOINTLY => p.married_filing_jointly.thresholds
+    MARRIED_FILING_SEPARATELY => p.married_filing_separately.thresholds
+    HEAD_OF_HOUSEHOLD => p.head_of_household.thresholds
+    QUALIFYING_SURVIVING_SPOUSE => p.qualifying_surviving_spouse.thresholds
+  }
+}
 
-  # 12.3% bracket: above threshold[8]
-  bracket_123 = taxable_income - thresholds[8]
-  tax = tax + max(0, bracket_123) * 0.123
+# California Personal Income Tax
+# 9 marginal brackets: 1%, 2%, 4%, 6%, 8%, 9.3%, 10.3%, 11.3%, 12.3%
+variable ca_income_tax {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "California Personal Income Tax"
+  description "California state income tax per RTC 17041 (excludes MHS tax)"
+  reference (
+    "CA RTC 17041",
+    "https://www.ftb.ca.gov/forms/2024/2024-540-tax-rate-schedules.pdf"
+  )
 
-  return tax
+  formula {
+    let taxable_income = variable(ca_taxable_income)
+    let filing_status = variable(ca_filing_status)
 
-defined_for:
-  taxable_income > 0
+    # Tax rates are fixed in statute (9 brackets)
+    let rates = parameter(gov.ca.ftb.income_tax.rates)
+    let thresholds = get_bracket_thresholds(filing_status, period)
 
-default 0
+    # Progressive marginal rate calculation
+    let tax = 0
+
+    # 1% bracket: $0 to threshold[1]
+    tax = tax + max(0, min(taxable_income, thresholds[1]) - thresholds[0]) * rates[0]
+
+    # 2% bracket: threshold[1] to threshold[2]
+    tax = tax + max(0, min(taxable_income, thresholds[2]) - thresholds[1]) * rates[1]
+
+    # 4% bracket: threshold[2] to threshold[3]
+    tax = tax + max(0, min(taxable_income, thresholds[3]) - thresholds[2]) * rates[2]
+
+    # 6% bracket: threshold[3] to threshold[4]
+    tax = tax + max(0, min(taxable_income, thresholds[4]) - thresholds[3]) * rates[3]
+
+    # 8% bracket: threshold[4] to threshold[5]
+    tax = tax + max(0, min(taxable_income, thresholds[5]) - thresholds[4]) * rates[4]
+
+    # 9.3% bracket: threshold[5] to threshold[6]
+    tax = tax + max(0, min(taxable_income, thresholds[6]) - thresholds[5]) * rates[5]
+
+    # 10.3% bracket: threshold[6] to threshold[7]
+    tax = tax + max(0, min(taxable_income, thresholds[7]) - thresholds[6]) * rates[6]
+
+    # 11.3% bracket: threshold[7] to threshold[8]
+    tax = tax + max(0, min(taxable_income, thresholds[8]) - thresholds[7]) * rates[7]
+
+    # 12.3% bracket: above threshold[8]
+    tax = tax + max(0, taxable_income - thresholds[8]) * rates[8]
+
+    return tax
+  }
+
+  defined_for {
+    variable(ca_taxable_income) > 0
+  }
+
+  default 0
+}
 
 # Vectorized version for microsimulation
-entity TaxUnit
-period Year
-dtype Money
-label "California Income Tax (Vectorized)"
+variable ca_income_tax_vectorized {
+  entity TaxUnit
+  period Year
+  dtype Money
+  unit "USD"
+  label "California Income Tax (Vectorized)"
+  description "Vectorized California income tax calculation for microsimulation"
+  reference "CA RTC 17041"
 
-formula:
-  thresholds = get_thresholds(filing_status)
-  n = len(taxable_income)
-  tax = zeros(n)
+  formula {
+    let taxable_income = variable(ca_taxable_income)
+    let filing_status = variable(ca_filing_status)
+    let rates = parameter(gov.ca.ftb.income_tax.rates)
+    let thresholds = get_bracket_thresholds(filing_status, period)
 
-  # Vectorized bracket calculation
-  tax = tax + maximum(0, minimum(taxable_income, thresholds[1]) - thresholds[0]) * 0.01
-  tax = tax + maximum(0, minimum(taxable_income, thresholds[2]) - thresholds[1]) * 0.02
-  tax = tax + maximum(0, minimum(taxable_income, thresholds[3]) - thresholds[2]) * 0.04
-  tax = tax + maximum(0, minimum(taxable_income, thresholds[4]) - thresholds[3]) * 0.06
-  tax = tax + maximum(0, minimum(taxable_income, thresholds[5]) - thresholds[4]) * 0.08
-  tax = tax + maximum(0, minimum(taxable_income, thresholds[6]) - thresholds[5]) * 0.093
-  tax = tax + maximum(0, minimum(taxable_income, thresholds[7]) - thresholds[6]) * 0.103
-  tax = tax + maximum(0, minimum(taxable_income, thresholds[8]) - thresholds[7]) * 0.113
-  tax = tax + maximum(0, taxable_income - thresholds[8]) * 0.123
+    # Vectorized bracket calculation
+    let tax = zeros_like(taxable_income)
 
-  return tax
+    tax = tax + maximum(0, minimum(taxable_income, thresholds[1]) - thresholds[0]) * rates[0]
+    tax = tax + maximum(0, minimum(taxable_income, thresholds[2]) - thresholds[1]) * rates[1]
+    tax = tax + maximum(0, minimum(taxable_income, thresholds[3]) - thresholds[2]) * rates[2]
+    tax = tax + maximum(0, minimum(taxable_income, thresholds[4]) - thresholds[3]) * rates[3]
+    tax = tax + maximum(0, minimum(taxable_income, thresholds[5]) - thresholds[4]) * rates[4]
+    tax = tax + maximum(0, minimum(taxable_income, thresholds[6]) - thresholds[5]) * rates[5]
+    tax = tax + maximum(0, minimum(taxable_income, thresholds[7]) - thresholds[6]) * rates[6]
+    tax = tax + maximum(0, minimum(taxable_income, thresholds[8]) - thresholds[7]) * rates[7]
+    tax = tax + maximum(0, taxable_income - thresholds[8]) * rates[8]
+
+    return tax
+  }
+
+  default 0
+}

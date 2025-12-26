@@ -1,49 +1,110 @@
-# California Revenue and Taxation Code § 17052.1
+# California Revenue and Taxation Code Section 17052.1
 # Young Child Tax Credit (YCTC) Parameters
 #
 # Source: FTB Young Child Tax Credit
-# https://www.ftb.ca.gov/file/personal/credits/young-child-tax-credit.html
+# Reference: https://www.ftb.ca.gov/file/personal/credits/young-child-tax-credit.html
+#
+# YCTC is a refundable tax credit for families with qualifying children under age 6.
+# Parameters are adjusted annually for inflation.
 
-variable: yctc
-description: Young Child Tax Credit amounts and thresholds
+metadata:
+  statute: "CA RTC 17052.1"
+  description: "Young Child Tax Credit amounts and thresholds"
+  reference:
+    - "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17052.1&lawCode=RTC"
+    - "https://www.ftb.ca.gov/file/personal/credits/young-child-tax-credit.html"
 
-# 2024 Tax Year
-# Source: FTB 2024 Form 3514 Instructions
-2024:
-  # Maximum credit per tax return (not per child)
-  max_credit: 1154
+# =============================================================================
+# Maximum Credit Amount
+# Note: Credit is per TAX RETURN, not per qualifying child
+# =============================================================================
 
-  # Income threshold - full credit below this amount
-  income_threshold: 26626
+gov.ca.ftb.yctc.max_credit:
+  description: "Maximum Young Child Tax Credit per tax return"
+  unit: "USD"
 
-  # Maximum earned income to qualify
-  max_income: 32900
+  values:
+    2023-01-01: 1117
+    2024-01-01: 1154
+    2025-01-01: 1189    # Projected 3.1% increase
+    2026-01-01: 1219    # Projected 2.5% increase
 
-  # Credit reduction per $100 of income over threshold
-  reduction_per_100: 21.67
+  reference: "CA RTC 17052.1, FTB Form 3514"
 
-  # Age requirement
-  child_age_limit: 6  # Under 6 at end of tax year
+# =============================================================================
+# Income Threshold (Full Credit Below This Amount)
+# =============================================================================
 
-# 2023 Tax Year (for reference)
-2023:
-  max_credit: 1117
-  income_threshold: 25803
-  max_income: 30950
-  reduction_per_100: 21.67
-  child_age_limit: 6
+gov.ca.ftb.yctc.income_threshold:
+  description: "Earned income threshold below which full YCTC is available"
+  unit: "USD"
 
-# 2025 Tax Year (announced)
-2025:
-  max_credit: 1189
-  income_threshold: 27438
-  max_income: 33951
-  reduction_per_100: 21.67
-  child_age_limit: 6
+  values:
+    2023-01-01: 25803
+    2024-01-01: 26626
+    2025-01-01: 27438   # Projected 3.1% increase
+    2026-01-01: 28124   # Projected 2.5% increase
 
-# Notes:
+  reference: "FTB Form 3514 Instructions"
+
+# =============================================================================
+# Maximum Income (Credit Phases Out Completely Above This)
+# =============================================================================
+
+gov.ca.ftb.yctc.max_income:
+  description: "Maximum earned income to receive any YCTC"
+  unit: "USD"
+
+  values:
+    2023-01-01: 30950
+    2024-01-01: 32900
+    2025-01-01: 33951   # Projected 3.1% increase
+    2026-01-01: 34800   # Projected 2.5% increase
+
+  reference: "FTB Form 3514 Instructions"
+
+# =============================================================================
+# Phase-Out Reduction Per $100 of Excess Income
+# =============================================================================
+
+gov.ca.ftb.yctc.reduction_per_100:
+  description: "Credit reduction for each $100 of earned income over threshold"
+  unit: "USD"
+
+  values:
+    # This amount remains relatively stable as it's derived from the
+    # relationship between max_credit and (max_income - income_threshold)
+    2023-01-01: 21.67
+    2024-01-01: 21.67
+    2025-01-01: 21.67
+    2026-01-01: 21.67
+
+  reference: "FTB Form 3514 Instructions"
+
+# =============================================================================
+# Age Limit for Qualifying Child
+# =============================================================================
+
+gov.ca.ftb.yctc.child_age_limit:
+  description: "Child must be under this age at end of tax year to qualify"
+  unit: "years"
+
+  values:
+    2019-01-01: 6  # Must be under age 6 (i.e., 5 or younger)
+
+  reference: "CA RTC 17052.1(b)"
+
+# =============================================================================
+# Notes on YCTC Eligibility
+# =============================================================================
+
 # - YCTC is fully refundable
-# - Must also qualify for CalEITC to receive YCTC
 # - Credit is per tax return, not per qualifying child
-# - Beginning in 2022, taxpayers may have net loss and still qualify
-# - Can have $0 or even negative earned income if within loss threshold
+# - Must have at least one qualifying child under age 6 at end of tax year
+# - Originally required CalEITC eligibility (2019-2021)
+# - Beginning 2022, eligibility expanded:
+#   - Taxpayers may have net loss and still qualify
+#   - Can qualify even without CalEITC if within YCTC income limits
+# - Cannot use ITIN if child was not born in the US (citizenship requirement)
+# - Phase-out calculation: for every $100 over income_threshold,
+#   credit reduces by reduction_per_100 amount
