@@ -1,0 +1,29 @@
+# California Revenue and Taxation Code § 17054
+# Standard Deduction Parameters
+#
+# Source: FTB Form 540 Instructions
+# https://www.ftb.ca.gov/forms/2024/2024-540-booklet.html
+
+variable: ca_standard_deduction
+description: California standard deduction amounts by filing status
+
+# 2024 Tax Year
+# Source: FTB 2024 Form 540 Booklet
+2024:
+  single: 5540
+  married_filing_separately: 5540
+  married_filing_jointly: 11080
+  head_of_household: 11080
+  qualifying_widow: 11080
+
+# 2023 Tax Year (for reference)
+2023:
+  single: 5363
+  married_filing_separately: 5363
+  married_filing_jointly: 10726
+  head_of_household: 10726
+  qualifying_widow: 10726
+
+# Note: California standard deductions are significantly lower than federal
+# Federal 2024: $14,600 (single), $29,200 (MFJ)
+# California 2024: $5,540 (single), $11,080 (MFJ)

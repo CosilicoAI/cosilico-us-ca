@@ -1,0 +1,77 @@
+# California Franchise Tax Board - 2024 Tax Year Parameters
+#
+# Consolidated parameters file for California 2024 tax year
+# Source: FTB Form 540 Booklet and related forms
+# https://www.ftb.ca.gov/forms/2024/2024-540-booklet.html
+
+tax_year: 2024
+jurisdiction: CA
+source:
+  agency: California Franchise Tax Board
+  url: https://www.ftb.ca.gov
+  effective_date: 2024-01-01
+
+# Standard Deduction (RTC § 17054)
+standard_deduction:
+  single: 5540
+  married_filing_jointly: 11080
+  married_filing_separately: 5540
+  head_of_household: 11080
+  qualifying_widow: 11080
+
+# Personal Exemption Credits (RTC § 17054)
+# California uses exemption credits, not deductions
+exemption_credit:
+  single: 144
+  married_filing_jointly: 288  # $144 x 2
+  head_of_household: 144
+  dependent: 446  # Per dependent
+
+# Mental Health Services Tax (RTC § 17043)
+mhs_tax:
+  threshold: 1000000
+  rate: 0.01
+
+# CalEITC (RTC § 17052)
+caleitc:
+  max_credit:
+    0: 294
+    1: 1958
+    2: 3239
+    3: 3644
+  max_income: 31950
+  investment_income_limit: 4674
+
+# Young Child Tax Credit (RTC § 17052.1)
+yctc:
+  max_credit: 1154
+  income_threshold: 26626
+  max_income: 32900
+  child_age_limit: 6
+
+# Foster Youth Tax Credit (RTC § 17052.2)
+fytc:
+  max_credit: 1154
+  age_minimum: 18
+  age_maximum: 25
+
+# Alternative Minimum Tax (RTC § 17062)
+amt:
+  exemption_single: 95853
+  exemption_joint: 127811
+  exemption_separate: 63905
+  phaseout_single: 366550
+  phaseout_joint: 488737
+  rate: 0.07
+
+# Tax filing thresholds
+filing_threshold:
+  single: 22661
+  married_filing_jointly: 45322
+  head_of_household: 34094
+  dependent: 6954
+
+# SDI rate (State Disability Insurance)
+sdi:
+  rate: 0.009
+  wage_limit: 153164

@@ -1,0 +1,59 @@
+# California Revenue and Taxation Code § 17052.1
+# Young Child Tax Credit (YCTC)
+#
+# The YCTC provides additional refundable tax credit for families
+# with qualifying children under age 6 who also qualify for CalEITC.
+#
+# For 2024:
+# - Maximum credit: $1,154 per tax return (not per child)
+# - Child must be under 6 at end of tax year
+# - Must qualify for CalEITC
+# - Earned income limit: $32,900
+
+imports:
+  earned_income: statute/rtc/17052/earned_income
+  caleitc_amount: statute/rtc/17052/caleitc
+  has_child_under_6: statute/rtc/17052.1/has_child_under_6
+
+parameters:
+  max_credit: parameters#2024.max_credit
+  income_threshold: parameters#2024.income_threshold
+  max_income: parameters#2024.max_income
+  reduction_per_100: parameters#2024.reduction_per_100
+
+entity TaxUnit
+period Year
+dtype Money
+unit "USD"
+label "Young Child Tax Credit"
+description "YCTC for families with children under 6 per RTC § 17052.1"
+
+formula:
+  # Must qualify for CalEITC
+  if caleitc_amount <= 0 then
+    return 0
+
+  # Must have qualifying child under age 6
+  if not has_child_under_6 then
+    return 0
+
+  # Income must be at or below maximum
+  if earned_income > max_income then
+    return 0
+
+  # Full credit if earned income is at or below threshold
+  if earned_income <= income_threshold then
+    return max_credit
+
+  # Phase-out: for every $100 over threshold, credit reduces
+  excess_income = earned_income - income_threshold
+  reduction_units = floor(excess_income / 100)
+  reduction_amount = reduction_units * reduction_per_100
+  credit = max_credit - reduction_amount
+
+  return max(0, credit)
+
+defined_for:
+  has_child_under_6 and caleitc_amount > 0
+
+default 0

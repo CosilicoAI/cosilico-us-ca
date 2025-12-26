@@ -1,0 +1,119 @@
+# Integration tests for California Earned Income Tax Credit (CalEITC)
+# Tests RTC § 17052 (CalEITC) and § 17052.1 (YCTC)
+
+test_suite: caleitc
+description: CalEITC and Young Child Tax Credit calculations
+
+tests:
+  # No qualifying children
+  - name: caleitc_no_children_low_income
+    description: Single filer, no children, $5,000 earned income
+    inputs:
+      earned_income: 5000
+      num_qualifying_children: 0
+      has_child_under_6: false
+      investment_income: 0
+    expected:
+      caleitc: 294  # At max credit amount
+      yctc: 0
+
+  - name: caleitc_no_children_phaseout
+    description: Single filer, no children, $15,000 earned income (phasing out)
+    inputs:
+      earned_income: 15000
+      num_qualifying_children: 0
+      has_child_under_6: false
+      investment_income: 0
+    expected:
+      caleitc: 180  # Reduced due to phase-out (approximate)
+      yctc: 0
+
+  # One qualifying child
+  - name: caleitc_one_child_low_income
+    description: Single filer, 1 child, $10,000 earned income
+    inputs:
+      earned_income: 10000
+      num_qualifying_children: 1
+      has_child_under_6: false
+      investment_income: 0
+    expected:
+      caleitc: 1958  # At max credit
+      yctc: 0
+
+  # Two qualifying children
+  - name: caleitc_two_children
+    description: Single filer, 2 children, $12,000 earned income
+    inputs:
+      earned_income: 12000
+      num_qualifying_children: 2
+      has_child_under_6: false
+      investment_income: 0
+    expected:
+      caleitc: 3239  # At max credit
+      yctc: 0
+
+  # Three or more qualifying children
+  - name: caleitc_three_children_max
+    description: Single filer, 3 children, $10,000 earned income
+    inputs:
+      earned_income: 10000
+      num_qualifying_children: 3
+      has_child_under_6: false
+      investment_income: 0
+    expected:
+      caleitc: 3644  # Maximum credit
+      yctc: 0
+
+  # Young Child Tax Credit tests
+  - name: yctc_with_young_child
+    description: Single filer, 1 child under 6, $15,000 earned income
+    inputs:
+      earned_income: 15000
+      num_qualifying_children: 1
+      has_child_under_6: true
+      investment_income: 0
+    expected:
+      caleitc: 1958  # Still at max (below phaseout)
+      yctc: 1154     # Full YCTC
+
+  - name: yctc_phaseout
+    description: Single filer, 1 child under 6, $28,000 earned income
+    inputs:
+      earned_income: 28000
+      num_qualifying_children: 1
+      has_child_under_6: true
+      investment_income: 0
+    expected:
+      yctc: 856  # Reduced due to phase-out
+      # (28,000 - 26,626) / 100 * 21.67 = 13.74 units * 21.67 = ~298 reduction
+
+  # Disqualification tests
+  - name: caleitc_over_investment_income_limit
+    description: Disqualified due to high investment income
+    inputs:
+      earned_income: 10000
+      num_qualifying_children: 1
+      investment_income: 5000  # Over $4,674 limit
+    expected:
+      caleitc: 0
+      yctc: 0
+
+  - name: caleitc_over_income_limit
+    description: Disqualified due to high earned income
+    inputs:
+      earned_income: 35000  # Over $31,950 limit
+      num_qualifying_children: 1
+      investment_income: 0
+    expected:
+      caleitc: 0
+      yctc: 0
+
+  - name: caleitc_no_earned_income
+    description: Disqualified due to no earned income
+    inputs:
+      earned_income: 0
+      num_qualifying_children: 1
+      investment_income: 0
+    expected:
+      caleitc: 0
+      yctc: 0

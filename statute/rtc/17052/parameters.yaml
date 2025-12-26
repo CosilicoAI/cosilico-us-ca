@@ -1,0 +1,56 @@
+# California Revenue and Taxation Code § 17052
+# California Earned Income Tax Credit (CalEITC) Parameters
+#
+# Source: FTB CalEITC Eligibility and Credit Information
+# https://www.ftb.ca.gov/file/personal/credits/caleitc/eligibility-and-credit-information.html
+
+variable: caleitc
+description: CalEITC credit amounts and thresholds
+
+# 2024 Tax Year
+# Source: FTB 2024 Form 3514 Instructions
+2024:
+  # Maximum credit amounts by number of qualifying children
+  max_credit:
+    0: 294      # No qualifying children
+    1: 1958     # 1 qualifying child
+    2: 3239     # 2 qualifying children
+    3: 3644     # 3 or more qualifying children
+
+  # Maximum income limits (earned income and AGI)
+  max_income: 31950
+
+  # Investment income disqualification threshold
+  investment_income_limit: 4674
+
+  # Phase-out start thresholds (earned income)
+  # Credit begins phasing out after these amounts
+  phaseout_start:
+    0: 4525     # No children
+    1: 6794     # 1 child
+    2: 9537     # 2+ children
+
+  # Minimum earned income requirement
+  min_earned_income: 1
+
+# 2023 Tax Year (for reference)
+2023:
+  max_credit:
+    0: 285
+    1: 1900
+    2: 3137
+    3: 3529
+  max_income: 30950
+  investment_income_limit: 4525
+  phaseout_start:
+    0: 4384
+    1: 6586
+    2: 9244
+
+# Notes:
+# - CalEITC is fully refundable
+# - Must have valid SSN or ITIN
+# - Must be CA resident for more than half the year
+# - Must be at least 18 years old OR have a qualifying child
+# - Earned income includes wages, self-employment income
+# - Earned income does NOT include unemployment, disability, etc.

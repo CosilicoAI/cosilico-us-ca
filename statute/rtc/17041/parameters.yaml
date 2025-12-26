@@ -1,0 +1,139 @@
+# California Revenue and Taxation Code § 17041
+# Personal Income Tax Rate Schedules
+#
+# Source: FTB 2024 Tax Rate Schedules
+# https://www.ftb.ca.gov/forms/2024/2024-540-tax-rate-schedules.pdf
+
+variable: ca_income_tax_brackets
+description: California personal income tax bracket thresholds by filing status
+
+# Tax rates are fixed in statute (9 brackets)
+rates:
+  - 0.01     # 1%
+  - 0.02     # 2%
+  - 0.04     # 4%
+  - 0.06     # 6%
+  - 0.08     # 8%
+  - 0.093    # 9.3%
+  - 0.103    # 10.3%
+  - 0.113    # 11.3%
+  - 0.123    # 12.3%
+
+# 2024 Tax Year Thresholds (income at or above which each rate applies)
+# Source: FTB 2024 Form 540 Tax Rate Schedules
+2024:
+  single:
+    # Schedule X - Single or Married/RDP Filing Separately
+    thresholds:
+      - 0           # 1% bracket starts at $0
+      - 10756       # 2% bracket starts at $10,756
+      - 25499       # 4% bracket starts at $25,499
+      - 40245       # 6% bracket starts at $40,245
+      - 55866       # 8% bracket starts at $55,866
+      - 70606       # 9.3% bracket starts at $70,606
+      - 360659      # 10.3% bracket starts at $360,659
+      - 432787      # 11.3% bracket starts at $432,787
+      - 721314      # 12.3% bracket starts at $721,314
+    # Pre-computed tax amounts at each threshold for quick calculation
+    tax_at_threshold:
+      - 0           # Tax at $0
+      - 107.56      # Tax at $10,756
+      - 402.42      # Tax at $25,499
+      - 992.26      # Tax at $40,245
+      - 1929.52     # Tax at $55,866
+      - 3108.72     # Tax at $70,606
+      - 30083.65    # Tax at $360,659
+      - 37506.83    # Tax at $432,787
+      - 70108.38    # Tax at $721,314
+
+  married_filing_jointly:
+    # Schedule Y - Married/RDP Filing Jointly or Qualifying Surviving Spouse
+    thresholds:
+      - 0           # 1% bracket starts at $0
+      - 21512       # 2% bracket starts at $21,512
+      - 50998       # 4% bracket starts at $50,998
+      - 80490       # 6% bracket starts at $80,490
+      - 111732      # 8% bracket starts at $111,732
+      - 141212      # 9.3% bracket starts at $141,212
+      - 721318      # 10.3% bracket starts at $721,318
+      - 865574      # 11.3% bracket starts at $865,574
+      - 1442628     # 12.3% bracket starts at $1,442,628
+    tax_at_threshold:
+      - 0
+      - 215.12
+      - 804.84
+      - 1984.52
+      - 3859.04
+      - 6217.44
+      - 60167.30
+      - 75025.66
+      - 140242.76
+
+  married_filing_separately:
+    # Same as Single (Schedule X)
+    thresholds:
+      - 0
+      - 10756
+      - 25499
+      - 40245
+      - 55866
+      - 70606
+      - 360659
+      - 432787
+      - 721314
+    tax_at_threshold:
+      - 0
+      - 107.56
+      - 402.42
+      - 992.26
+      - 1929.52
+      - 3108.72
+      - 30083.65
+      - 37506.83
+      - 70108.38
+
+  head_of_household:
+    # Schedule Z - Head of Household
+    thresholds:
+      - 0           # 1% bracket starts at $0
+      - 21527       # 2% bracket starts at $21,527
+      - 51000       # 4% bracket starts at $51,000
+      - 65744       # 6% bracket starts at $65,744
+      - 81364       # 8% bracket starts at $81,364
+      - 96107       # 9.3% bracket starts at $96,107
+      - 490493      # 10.3% bracket starts at $490,493
+      - 588593      # 11.3% bracket starts at $588,593
+      - 980987      # 12.3% bracket starts at $980,987
+    tax_at_threshold:
+      - 0
+      - 215.27
+      - 805.19
+      - 1394.95
+      - 2332.15
+      - 3511.59
+      - 40200.79
+      - 50305.09
+      - 94605.71
+
+  qualifying_widow:
+    # Same as Married Filing Jointly (Schedule Y)
+    thresholds:
+      - 0
+      - 21512
+      - 50998
+      - 80490
+      - 111732
+      - 141212
+      - 721318
+      - 865574
+      - 1442628
+    tax_at_threshold:
+      - 0
+      - 215.12
+      - 804.84
+      - 1984.52
+      - 3859.04
+      - 6217.44
+      - 60167.30
+      - 75025.66
+      - 140242.76

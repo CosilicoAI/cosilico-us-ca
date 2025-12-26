@@ -1,0 +1,84 @@
+# California Revenue and Taxation Code § 17052
+# California Earned Income Tax Credit (CalEITC)
+#
+# CalEITC provides a refundable tax credit for low-income working
+# individuals and families. It was enacted in 2015 and significantly
+# expanded in subsequent years.
+#
+# For 2024:
+# - Maximum credit: $3,644 (3+ qualifying children)
+# - Income limit: $31,950
+# - Must have earned income of at least $1
+
+imports:
+  earned_income: statute/rtc/17052/earned_income
+  agi: statute/rtc/17041/california_agi
+  num_qualifying_children: statute/rtc/17052/num_qualifying_children
+  investment_income: statute/rtc/17052/investment_income
+
+parameters:
+  # Maximum credit amounts by number of qualifying children
+  max_credit: parameters#2024.max_credit
+
+  # Income thresholds
+  max_income: parameters#2024.max_income
+  investment_income_limit: parameters#2024.investment_income_limit
+
+  # Phase-out thresholds
+  phaseout_start: parameters#2024.phaseout_start
+
+entity TaxUnit
+period Year
+dtype Money
+unit "USD"
+label "California Earned Income Tax Credit"
+description "CalEITC per RTC § 17052"
+
+formula:
+  # Disqualified if investment income exceeds limit
+  if investment_income > investment_income_limit then
+    return 0
+
+  # Must have earned income between $1 and max income
+  if earned_income < 1 or earned_income > max_income then
+    return 0
+
+  # AGI must also be within limits
+  if agi > max_income then
+    return 0
+
+  # Get max credit based on number of qualifying children
+  credit_amount = match num_qualifying_children {
+    0 => max_credit[0]
+    1 => max_credit[1]
+    2 => max_credit[2]
+    _ => max_credit[3]  # 3 or more children
+  }
+
+  # Phase-in: credit builds up as earned income increases
+  # Phase-out: credit decreases as income exceeds threshold
+  # The actual calculation uses a lookup table from FTB 3514
+
+  # Get phase-out threshold based on number of children
+  phaseout_threshold = match num_qualifying_children {
+    0 => phaseout_start[0]
+    1 => phaseout_start[1]
+    _ => phaseout_start[2]  # 2+ children
+  }
+
+  # Simplified calculation (actual uses detailed credit table)
+  # Credit phases out after the phaseout threshold
+  if earned_income <= phaseout_threshold then
+    return credit_amount
+  else
+    # Phase-out reduces credit proportionally
+    reduction_income = earned_income - phaseout_threshold
+    phaseout_range = max_income - phaseout_threshold
+    reduction_rate = credit_amount / phaseout_range
+    reduced_credit = credit_amount - (reduction_income * reduction_rate)
+    return max(0, reduced_credit)
+
+defined_for:
+  earned_income >= 1
+
+default 0

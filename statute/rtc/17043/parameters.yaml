@@ -1,0 +1,24 @@
+# California Revenue and Taxation Code § 17043
+# Mental Health Services Tax Parameters
+#
+# Source: Proposition 63 (2004), California Mental Health Services Act
+# https://ballotpedia.org/California_Proposition_63,_Tax_Increase_on_Income_Above_$1_Million_for_Mental_Health_Services_Initiative_(2004)
+
+variable: mhs_tax_parameters
+description: Mental Health Services Tax threshold and rate
+
+# The threshold and rate are fixed in statute (not indexed for inflation)
+# Effective for tax years beginning on or after January 1, 2005
+
+threshold: 1000000  # $1,000,000
+rate: 0.01          # 1%
+
+# Note: The MHS tax was modified by Proposition 1 (March 2024)
+# which rebranded MHSA as the Behavioral Health Services Act (BHSA)
+# but the 1% tax on income over $1 million remains unchanged.
+
+# Historical context:
+# - Enacted: November 2004 (Prop 63)
+# - Effective: January 1, 2005
+# - Modified: March 2024 (Prop 1) - expanded use of funds to include
+#   substance use disorders and housing, but tax structure unchanged

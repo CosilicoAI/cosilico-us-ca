@@ -1,0 +1,8 @@
+{"id": "cosilico-us-ca-001", "title": "Add California itemized deductions (RTC 17073)", "type": "feature", "status": "pending", "priority": 2, "created": "2024-12-26", "labels": ["deductions", "tax"]}
+{"id": "cosilico-us-ca-002", "title": "Implement CA AMT calculation (RTC 17062)", "type": "feature", "status": "pending", "priority": 2, "created": "2024-12-26", "labels": ["amt", "tax"]}
+{"id": "cosilico-us-ca-003", "title": "Add Foster Youth Tax Credit (RTC 17052.2)", "type": "feature", "status": "pending", "priority": 3, "created": "2024-12-26", "labels": ["credits", "fytc"]}
+{"id": "cosilico-us-ca-004", "title": "Implement CA personal exemption credits", "type": "feature", "status": "pending", "priority": 2, "created": "2024-12-26", "labels": ["exemptions", "tax"]}
+{"id": "cosilico-us-ca-005", "title": "Add CA conformity rules to federal tax law", "type": "feature", "status": "pending", "priority": 2, "created": "2024-12-26", "labels": ["conformity", "federal"]}
+{"id": "cosilico-us-ca-006", "title": "Validate CalEITC against FTB calculator", "type": "task", "status": "pending", "priority": 1, "created": "2024-12-26", "labels": ["validation", "caleitc"]}
+{"id": "cosilico-us-ca-007", "title": "Add SDI (State Disability Insurance) calculation", "type": "feature", "status": "pending", "priority": 3, "created": "2024-12-26", "labels": ["payroll", "sdi"]}
+{"id": "cosilico-us-ca-008", "title": "Add Senior Head of Household Credit (RTC 17054.5)", "type": "feature", "status": "pending", "priority": 3, "created": "2024-12-26", "labels": ["credits", "senior"]}

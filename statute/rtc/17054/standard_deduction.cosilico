@@ -1,0 +1,40 @@
+# California Revenue and Taxation Code § 17054
+# Standard Deduction
+#
+# California provides a standard deduction that is significantly
+# lower than the federal standard deduction. Taxpayers choose between
+# the standard deduction and itemized deductions.
+#
+# For 2024:
+# - Single or Married Filing Separately: $5,540
+# - Married Filing Jointly, Head of Household, Qualifying Widow(er): $11,080
+
+imports:
+  filing_status: statute/rtc/17041/filing_status
+
+parameters:
+  # Standard deduction amounts from parameters.yaml
+  single_amount: parameters#2024.single
+  joint_amount: parameters#2024.married_filing_jointly
+
+entity TaxUnit
+period Year
+dtype Money
+unit "USD"
+label "California Standard Deduction"
+description "Standard deduction per RTC § 17054"
+
+formula:
+  match filing_status {
+    SINGLE => single_amount
+    MARRIED_FILING_SEPARATELY => single_amount
+    MARRIED_FILING_JOINTLY => joint_amount
+    HEAD_OF_HOUSEHOLD => joint_amount
+    QUALIFYING_WIDOW => joint_amount
+  }
+
+defined_for:
+  # All filers can claim the standard deduction
+  true
+
+default 0

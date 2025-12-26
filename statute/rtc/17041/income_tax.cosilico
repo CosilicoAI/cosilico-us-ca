@@ -1,0 +1,114 @@
+# California Revenue and Taxation Code § 17041
+# Imposition of Tax - Personal Income Tax Rates
+#
+# "There shall be levied, collected, and paid for each taxable year
+# upon the entire taxable income of every resident of this state...
+# taxes in the following amounts and at the following rates upon the
+# amount of taxable income..."
+#
+# California has 9 marginal tax brackets ranging from 1% to 12.3%.
+# This does NOT include the Mental Health Services Tax (RTC § 17043).
+
+imports:
+  taxable_income: statute/rtc/17041/california_taxable_income
+  filing_status: statute/rtc/17041/filing_status
+
+parameters:
+  # Tax rates are fixed in statute (9 brackets: 1% to 12.3%)
+  rates: [0.01, 0.02, 0.04, 0.06, 0.08, 0.093, 0.103, 0.113, 0.123]
+
+  # Bracket thresholds loaded from parameters.yaml
+  thresholds_single: parameters#2024.single.thresholds
+  thresholds_joint: parameters#2024.married_filing_jointly.thresholds
+  thresholds_hoh: parameters#2024.head_of_household.thresholds
+  thresholds_separate: parameters#2024.married_filing_separately.thresholds
+  thresholds_widow: parameters#2024.qualifying_widow.thresholds
+
+function get_thresholds(filing_status: FilingStatus) -> Array[Money]:
+  match filing_status {
+    SINGLE => thresholds_single
+    MARRIED_FILING_JOINTLY => thresholds_joint
+    HEAD_OF_HOUSEHOLD => thresholds_hoh
+    MARRIED_FILING_SEPARATELY => thresholds_separate
+    QUALIFYING_WIDOW => thresholds_widow
+  }
+
+entity TaxUnit
+period Year
+dtype Money
+unit "USD"
+label "California Personal Income Tax"
+description "California state income tax per RTC § 17041 (excludes MHS tax)"
+
+formula:
+  thresholds = get_thresholds(filing_status)
+
+  # Progressive marginal rate calculation
+  tax = 0
+
+  # 1% bracket: $0 to threshold[1]
+  bracket_1 = min(taxable_income, thresholds[1]) - thresholds[0]
+  tax = tax + max(0, bracket_1) * 0.01
+
+  # 2% bracket: threshold[1] to threshold[2]
+  bracket_2 = min(taxable_income, thresholds[2]) - thresholds[1]
+  tax = tax + max(0, bracket_2) * 0.02
+
+  # 4% bracket: threshold[2] to threshold[3]
+  bracket_4 = min(taxable_income, thresholds[3]) - thresholds[2]
+  tax = tax + max(0, bracket_4) * 0.04
+
+  # 6% bracket: threshold[3] to threshold[4]
+  bracket_6 = min(taxable_income, thresholds[4]) - thresholds[3]
+  tax = tax + max(0, bracket_6) * 0.06
+
+  # 8% bracket: threshold[4] to threshold[5]
+  bracket_8 = min(taxable_income, thresholds[5]) - thresholds[4]
+  tax = tax + max(0, bracket_8) * 0.08
+
+  # 9.3% bracket: threshold[5] to threshold[6]
+  bracket_93 = min(taxable_income, thresholds[6]) - thresholds[5]
+  tax = tax + max(0, bracket_93) * 0.093
+
+  # 10.3% bracket: threshold[6] to threshold[7]
+  bracket_103 = min(taxable_income, thresholds[7]) - thresholds[6]
+  tax = tax + max(0, bracket_103) * 0.103
+
+  # 11.3% bracket: threshold[7] to threshold[8]
+  bracket_113 = min(taxable_income, thresholds[8]) - thresholds[7]
+  tax = tax + max(0, bracket_113) * 0.113
+
+  # 12.3% bracket: above threshold[8]
+  bracket_123 = taxable_income - thresholds[8]
+  tax = tax + max(0, bracket_123) * 0.123
+
+  return tax
+
+defined_for:
+  taxable_income > 0
+
+default 0
+
+# Vectorized version for microsimulation
+entity TaxUnit
+period Year
+dtype Money
+label "California Income Tax (Vectorized)"
+
+formula:
+  thresholds = get_thresholds(filing_status)
+  n = len(taxable_income)
+  tax = zeros(n)
+
+  # Vectorized bracket calculation
+  tax = tax + maximum(0, minimum(taxable_income, thresholds[1]) - thresholds[0]) * 0.01
+  tax = tax + maximum(0, minimum(taxable_income, thresholds[2]) - thresholds[1]) * 0.02
+  tax = tax + maximum(0, minimum(taxable_income, thresholds[3]) - thresholds[2]) * 0.04
+  tax = tax + maximum(0, minimum(taxable_income, thresholds[4]) - thresholds[3]) * 0.06
+  tax = tax + maximum(0, minimum(taxable_income, thresholds[5]) - thresholds[4]) * 0.08
+  tax = tax + maximum(0, minimum(taxable_income, thresholds[6]) - thresholds[5]) * 0.093
+  tax = tax + maximum(0, minimum(taxable_income, thresholds[7]) - thresholds[6]) * 0.103
+  tax = tax + maximum(0, minimum(taxable_income, thresholds[8]) - thresholds[7]) * 0.113
+  tax = tax + maximum(0, taxable_income - thresholds[8]) * 0.123
+
+  return tax
