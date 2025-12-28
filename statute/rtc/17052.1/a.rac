@@ -31,24 +31,13 @@ the amounts specified in clause (i) shall be recomputed in the manner
 provided in subdivision (h) of Section 17041.
 """
 
-# YCTC base amount (× 0.85 adjustment factor = indexed amount)
-# Statute says $1,176 × adjustment factor
+# YCTC base amount: $1,176 × adjustment factor (0.85)
+# Statute specifies $1,176; adjustment factor applied in formula
 parameter ca_yctc_base_amount:
   description: "YCTC base amount per RTC 17052.1(a)(2)(A)"
   unit: "USD"
   values:
     2019-01-01: 1176
-
-# YCTC effective amount after adjustment (indexed from 2023)
-parameter ca_yctc_amount:
-  description: "YCTC credit amount (after adjustment)"
-  unit: "USD"
-  indexed_by: statute/rtc/17041/h
-  values:
-    2021-01-01: 1000
-    2022-01-01: 1083
-    2023-01-01: 1117
-    2024-01-01: 1154
 
 # Maximum age for qualifying young child
 parameter ca_yctc_max_age:
@@ -56,27 +45,25 @@ parameter ca_yctc_max_age:
   values:
     2019-01-01: 6
 
-# Phase-out start
+# Phase-out start (statutory base, indexed from 2023 per 17041(h))
 parameter ca_yctc_phase_out_start:
   description: "YCTC phase-out start income"
   unit: "USD"
   indexed_by: statute/rtc/17041/h
   values:
     2019-01-01: 25000
-    2023-01-01: 25775
-    2024-01-01: 26626
 
-# Phase-out range
+# Phase-out range (statutory, not indexed)
 parameter ca_yctc_phase_out_range:
   description: "YCTC phase-out income range"
   unit: "USD"
-  indexed_by: statute/rtc/17041/h
   values:
     2019-01-01: 7500
 
 variable ca_yctc:
   imports:
     - statute/rtc/17052/a#ca_eitc
+    - statute/rtc/17052/a#ca_eitc_adjustment_factor
     - statute/rtc/17052/b#ca_eitc_eligible
     - statute/rtc/17052/c#ca_eitc_qualifying_child_count
   entity: TaxUnit
@@ -96,36 +83,40 @@ variable ca_yctc:
     # Eligibility: young child + CalEITC recipient (or eligible with losses)
     eligible = has_young_child & (gets_caleitc | is_caleitc_eligible)
 
+    # Credit amount = base × adjustment factor
+    # Note: Indexed values from guidance supersede this calculation
+    credit_amount = ca_yctc_base_amount * ca_eitc_adjustment_factor
+
     # Phase-out calculation
     earned_income = filer_adjusted_earnings
     excess_income = max(0, earned_income - ca_yctc_phase_out_start)
-    reduction_rate = ca_yctc_amount / ca_yctc_phase_out_range
+    reduction_rate = credit_amount / ca_yctc_phase_out_range
     reduction = excess_income * reduction_rate
 
-    credit = max(0, ca_yctc_amount - reduction)
+    credit = max(0, credit_amount - reduction)
 
     return eligible * credit
   tests:
     - name: "Eligible with young child, low income"
-      period: 2024-01
+      period: 2019-01
       inputs:
         has_young_child: true
         ca_eitc: 500
         filer_adjusted_earnings: 20000
-      # Full credit $1,154
-      expect: 1154
+      # Full credit = $1,176 × 0.85 = $999.60 ≈ $1000
+      expect: 1000
     - name: "Phase-out applies"
-      period: 2024-01
+      period: 2019-01
       inputs:
         has_young_child: true
         ca_eitc: 500
         filer_adjusted_earnings: 30000
-      # Excess = $30k - $26,626 = $3,374
-      # Reduction = $3,374 × ($1,154/$7,500) = $519
-      # Credit = $1,154 - $519 = $635
-      expect: 635
+      # Credit = $1000, Excess = $30k - $25k = $5k
+      # Reduction = $5k × ($1000/$7500) = $667
+      # Credit = $1000 - $667 = $333
+      expect: 333
     - name: "Not eligible - no CalEITC"
-      period: 2024-01
+      period: 2019-01
       inputs:
         has_young_child: true
         ca_eitc: 0

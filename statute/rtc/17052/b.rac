@@ -36,14 +36,13 @@ parameter ca_eitc_max_investment_income:
   indexed_by: statute/rtc/17052/g
   values:
     2015-01-01: 3650
-    2024-01-01: 11600
 
 parameter ca_eitc_max_earned_income:
-  description: "Maximum earned income for CalEITC"
+  description: "Maximum earned income for CalEITC (set by Budget Act)"
   unit: "USD"
-  reference: "Set by annual Budget Act"
+  reference: "Set by annual Budget Act, not statute"
   values:
-    2024-01-01: 31950
+    2015-01-01: 14161
 
 variable ca_eitc_eligible:
   imports:
