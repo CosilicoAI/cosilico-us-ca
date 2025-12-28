@@ -27,7 +27,7 @@ parameter ca_mhs_threshold:
 variable ca_mental_health_services_tax:
   imports:
     - cosilico-us:statute/26/62/a#adjusted_gross_income as federal_agi
-    - statute/rtc/17054/total#ca_standard_deduction
+    - statute/rtc/17054#ca_standard_deduction
   entity: TaxUnit
   period: Year
   dtype: Money
@@ -35,9 +35,37 @@ variable ca_mental_health_services_tax:
   label: "California Mental Health Services Tax"
   description: "1% surtax on taxable income over $1 million"
   formula: |
-    # Note: Per RTC 17043(c)(2), the $1M threshold is NOT indexed
+    # Per RTC 17043(c)(2), the $1M threshold is NOT indexed
     ca_taxable_income = max(0, federal_agi - ca_standard_deduction)
 
     # 1% on income over $1 million
     excess_income = max(0, ca_taxable_income - ca_mhs_threshold)
     return excess_income * ca_mhs_rate
+  tests:
+    - name: "Income under $1M - no tax"
+      period: 2005-01
+      inputs:
+        federal_agi: 500000
+        ca_standard_deduction: 3000
+      expect: 0
+    - name: "Income exactly $1M - no tax"
+      period: 2005-01
+      inputs:
+        federal_agi: 1003000
+        ca_standard_deduction: 3000
+      # Taxable = $1,000,000, no excess
+      expect: 0
+    - name: "Income $1.5M - tax on $500k excess"
+      period: 2005-01
+      inputs:
+        federal_agi: 1503000
+        ca_standard_deduction: 3000
+      # Taxable = $1.5M, excess = $500k, tax = $5,000
+      expect: 5000
+    - name: "Income $2M"
+      period: 2005-01
+      inputs:
+        federal_agi: 2003000
+        ca_standard_deduction: 3000
+      # Taxable = $2M, excess = $1M, tax = $10,000
+      expect: 10000

@@ -24,30 +24,56 @@ variable ca_personal_exemption_credit:
   label: "California Personal Exemption Credit"
   description: "Sum of personal exemption credits"
   formula: |
-    # Credit amounts are indexed annually per RTC 17054(i)
-    # Guidance files provide current indexed values
     credit = 0
 
     # Primary exemption based on filing status
     if filing_status == "married_filing_jointly":
-      credit = credit + ca_personal_exemption_joint
+      credit = credit + ca_personal_exemption_joint_base
     elif filing_status == "qualifying_surviving_spouse":
-      credit = credit + ca_personal_exemption_joint
+      credit = credit + ca_personal_exemption_joint_base
     else:
-      credit = credit + ca_personal_exemption_single
+      credit = credit + ca_personal_exemption_single_base
 
     # Senior additional credit
     if age >= 65:
-      credit = credit + ca_senior_exemption
+      credit = credit + ca_senior_exemption_base
 
     # Dependent credits
-    credit = credit + n_dependents * ca_dependent_exemption
+    credit = credit + n_dependents * ca_dependent_exemption_base
 
     # Blind credit
     if is_blind:
-      credit = credit + ca_blind_exemption
+      credit = credit + ca_blind_exemption_base
 
     return credit
+  tests:
+    - name: "Single filer, no dependents"
+      period: 1989-01
+      inputs:
+        filing_status: single
+        age: 30
+        n_dependents: 0
+        is_blind: false
+      # Base single credit = $52
+      expect: 52
+    - name: "Joint filers, senior, 2 dependents"
+      period: 1989-01
+      inputs:
+        filing_status: married_filing_jointly
+        age: 67
+        n_dependents: 2
+        is_blind: false
+      # Joint $104 + senior $52 + 2×$227 = $610
+      expect: 610
+    - name: "Single, blind"
+      period: 1989-01
+      inputs:
+        filing_status: single
+        age: 40
+        n_dependents: 0
+        is_blind: true
+      # Single $52 + blind $52 = $104
+      expect: 104
 
 # Standard deduction - derived from federal conformity
 # Base values; guidance files provide current indexed values
