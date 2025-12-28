@@ -3,6 +3,13 @@
 
 This script runs test cases through PolicyEngine and compares against
 our expected values to ensure parity.
+
+Usage:
+    python scripts/validate_vs_pe.py
+
+Note: TAXSIM binary currently crashes (SIGABRT), so we use PolicyEngine directly.
+The policyengine-taxsim package produces different results due to how it
+aggregates state taxes (includes payroll taxes like SDI).
 """
 
 from dataclasses import dataclass
@@ -19,6 +26,7 @@ class TestCase:
     expected: dict[str, float] | None = None
 
 
+# Reference test cases for California income tax validation
 TEST_CASES = [
     TestCase(
         name="Single filer, $50,000 income",
@@ -26,6 +34,8 @@ TEST_CASES = [
         income=50000,
         filing_status="single",
         dependents=[],
+        # PE 2024: ca_income_tax = $1,101.16
+        expected={"ca_income_tax": 1101.16},
     ),
     TestCase(
         name="Single parent, $20,000 with child age 3",
@@ -33,6 +43,8 @@ TEST_CASES = [
         income=20000,
         filing_status="head_of_household",
         dependents=[3],
+        # PE 2024: ca_income_tax = -$1,524.78 (with CalEITC $372.78, YCTC $1,154)
+        expected={"ca_income_tax": -1524.78, "ca_eitc": 372.78, "ca_yctc": 1154.00},
     ),
     TestCase(
         name="High income, $1,500,000",
@@ -40,6 +52,8 @@ TEST_CASES = [
         income=1500000,
         filing_status="single",
         dependents=[],
+        # PE 2024: ca_income_tax = $170,292.94, MHS = $4,944.60
+        expected={"ca_income_tax": 170292.94, "ca_mental_health_services_tax": 4944.60},
     ),
     TestCase(
         name="MHS threshold exact - $1,000,000",
@@ -47,6 +61,8 @@ TEST_CASES = [
         income=1000000,
         filing_status="single",
         dependents=[],
+        # PE 2024: ca_income_tax = $103,803.34, MHS = $0 (taxable < $1M)
+        expected={"ca_income_tax": 103803.34, "ca_mental_health_services_tax": 0},
     ),
     TestCase(
         name="Low income - CalEITC eligible",
@@ -54,6 +70,8 @@ TEST_CASES = [
         income=15000,
         filing_status="single",
         dependents=[],
+        # PE 2024: ca_income_tax = -$158.70 (CalEITC = $159.70)
+        expected={"ca_income_tax": -158.70, "ca_eitc": 159.70},
     ),
 ]
 
