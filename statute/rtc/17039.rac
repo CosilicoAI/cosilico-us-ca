@@ -22,6 +22,7 @@ variable ca_net_tax:
   imports:
     - statute/rtc/17041/a#ca_income_tax
     - statute/rtc/17043/a#ca_mental_health_services_tax
+    - statute/rtc/17054#ca_personal_exemption_credit
     - statute/rtc/17052/a#ca_eitc
     - statute/rtc/17052.1/a#ca_yctc
   entity: TaxUnit
@@ -34,44 +35,54 @@ variable ca_net_tax:
     # Gross tax = regular income tax + Mental Health Services Tax
     gross_tax = ca_income_tax + ca_mental_health_services_tax
 
-    # Total credits (refundable)
-    # Note: CalEITC and YCTC are refundable credits
-    total_credits = ca_eitc + ca_yctc
+    # Non-refundable credits (reduce tax to zero, not below)
+    after_nonrefundable = max(0, gross_tax - ca_personal_exemption_credit)
+
+    # Refundable credits (CalEITC and YCTC can create refunds)
+    refundable_credits = ca_eitc + ca_yctc
 
     # Net tax (can be negative for refundable credits)
-    return gross_tax - total_credits
+    return after_nonrefundable - refundable_credits
   tests:
-    - name: "Low income - credits exceed tax (refund)"
-      period: 2019-01
+    - name: "Low income - refundable credits exceed tax"
+      period: 1989-01
       inputs:
         ca_income_tax: 200
         ca_mental_health_services_tax: 0
+        ca_personal_exemption_credit: 52
         ca_eitc: 500
         ca_yctc: 1000
-      # Gross = $200, Credits = $1,500
-      # Net = $200 - $1,500 = -$1,300 (refund)
-      expect: -1300
-    - name: "Middle income - no credits"
-      period: 2019-01
+      # Gross = $200, after exemption = $148, refundable = $1500
+      # Net = $148 - $1500 = -$1352 (refund)
+      expect: -1352
+    - name: "Middle income - exemption credit only"
+      period: 1989-01
       inputs:
         ca_income_tax: 3500
         ca_mental_health_services_tax: 0
+        ca_personal_exemption_credit: 104
         ca_eitc: 0
         ca_yctc: 0
-      expect: 3500
+      # Gross = $3500, after exemption = $3396
+      expect: 3396
     - name: "High income - with MHS tax"
-      period: 2019-01
+      period: 2005-01
       inputs:
         ca_income_tax: 120000
         ca_mental_health_services_tax: 5000
+        ca_personal_exemption_credit: 104
         ca_eitc: 0
         ca_yctc: 0
-      # Gross = $125,000, Credits = $0
-      expect: 125000
-    - name: "Zero income"
+      # Gross = $125,000, after exemption = $124,896
+      expect: 124896
+    - name: "Exemption exceeds tax - floors at zero before refundables"
+      period: 1989-01
       inputs:
-        ca_income_tax: 0
+        ca_income_tax: 30
         ca_mental_health_services_tax: 0
-        ca_eitc: 0
+        ca_personal_exemption_credit: 52
+        ca_eitc: 100
         ca_yctc: 0
-      expect: 0
+      # Gross = $30, after exemption = max(0, 30-52) = $0
+      # Net = $0 - $100 = -$100 (refund)
+      expect: -100
