@@ -21,4 +21,4 @@ year, no later than August 1 of the current calendar year.
 
 # This subsection defines the indexing formula, not a computed variable.
 # The FTB publishes the indexed values annually in their Form 540 Booklet.
-# Those indexed values are captured in ftb/2024/tax_brackets.yaml
+# Guidance files provide current indexed values which supersede statutory base.

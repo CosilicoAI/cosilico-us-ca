@@ -25,7 +25,7 @@ variable ca_personal_exemption_credit:
   description: "Sum of personal exemption credits"
   formula: |
     # Credit amounts are indexed annually per RTC 17054(i)
-    # Actual values loaded from ftb/2024/personal_exemption_credits.yaml
+    # Guidance files provide current indexed values
     credit = 0
 
     # Primary exemption based on filing status
@@ -50,12 +50,14 @@ variable ca_personal_exemption_credit:
     return credit
 
 # Standard deduction - derived from federal conformity
-# Values are published in FTB Form 540 Booklet
+# Base values; guidance files provide current indexed values
 parameter ca_standard_deduction:
   description: "California standard deduction by filing status"
+  indexed_by: statute/rtc/17041/h
   values:
-    single: 5540
-    married_filing_jointly: 11080
-    married_filing_separately: 5540
-    head_of_household: 11080
-    qualifying_surviving_spouse: 11080
+    # Base values - indexed annually
+    single: 1500
+    married_filing_jointly: 3000
+    married_filing_separately: 1500
+    head_of_household: 3000
+    qualifying_surviving_spouse: 3000

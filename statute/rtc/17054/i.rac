@@ -23,4 +23,4 @@ amounts to the nearest one dollar ($1).
 
 # This subsection defines the indexing formula, not a computed variable.
 # The FTB publishes the indexed values annually in their Form 540 Booklet.
-# Those indexed values are captured in ftb/2024/personal_exemption_credits.yaml
+# Guidance files provide current indexed values which supersede statutory base.

@@ -67,8 +67,8 @@ class TestCaliforniaStandardDeduction:
         # Read raw file content to verify parameters are declared
         content = file_path.read_text()
         assert "ca_standard_deduction" in content
-        assert "5540" in content  # 2024 single value
-        assert "11080" in content  # 2024 joint value
+        assert "1500" in content  # base single value
+        assert "3000" in content  # base joint value
 
 
 class TestCaliforniaTaxBrackets:
