@@ -1,0 +1,101 @@
+# California Revenue & Taxation Code Section 17052(b)
+# CalEITC Eligibility Requirements
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17052.&lawCode=RTC
+
+text: """
+(b)(1) For purposes of this section, "eligible individual" means an
+individual who meets all of the following requirements:
+
+(A) The individual has a principal place of abode in this state for more
+than one-half of the taxable year.
+
+(B) The individual is 18 years of age or older at the end of the taxable
+year, or has a qualifying child.
+
+(C) The individual meets the requirements of Section 32(c)(1)(A)(ii) of
+the Internal Revenue Code, relating to joint returns.
+
+(D) The individual is not a nonresident alien.
+
+(E) The individual's earned income does not exceed the amount specified
+in the annual Budget Act.
+
+(F) The individual's total federal adjusted gross income for the taxable
+year is less than the amount that would reduce the credit to zero.
+"""
+
+parameter ca_eitc_min_age:
+  description: "Minimum age for CalEITC without qualifying child"
+  values:
+    2015-01-01: 18
+
+parameter ca_eitc_max_investment_income:
+  description: "Maximum investment income for CalEITC eligibility"
+  unit: "USD"
+  indexed_by: statute/rtc/17052/g
+  values:
+    2015-01-01: 3650
+    2024-01-01: 11600
+
+parameter ca_eitc_max_earned_income:
+  description: "Maximum earned income for CalEITC"
+  unit: "USD"
+  reference: "Set by annual Budget Act"
+  values:
+    2024-01-01: 31950
+
+variable ca_eitc_eligible:
+  imports:
+    - cosilico-us:statute/26/1#filing_status
+    - statute/rtc/17052/c#ca_eitc_qualifying_child_count
+  entity: TaxUnit
+  period: Year
+  dtype: Boolean
+  label: "CalEITC Eligible"
+  description: "Whether tax unit is eligible for CalEITC"
+  formula: |
+    # Age requirement: 18+ or has qualifying child
+    has_qualifying_child = ca_eitc_qualifying_child_count > 0
+    meets_age_requirement = (age >= ca_eitc_min_age) | has_qualifying_child
+
+    # Investment income limit
+    meets_investment_limit = eitc_relevant_investment_income <= ca_eitc_max_investment_income
+
+    # Earned income limit
+    meets_earned_income_limit = filer_adjusted_earnings <= ca_eitc_max_earned_income
+
+    # California residency (assumed true if filing CA return)
+    is_ca_resident = state == "CA"
+
+    return (
+      is_ca_resident &
+      meets_age_requirement &
+      meets_investment_limit &
+      meets_earned_income_limit
+    )
+  tests:
+    - name: "Eligible - meets all requirements"
+      inputs:
+        age: 25
+        state: "CA"
+        eitc_relevant_investment_income: 1000
+        filer_adjusted_earnings: 20000
+        ca_eitc_qualifying_child_count: 0
+      expect: true
+    - name: "Ineligible - too young without child"
+      inputs:
+        age: 17
+        state: "CA"
+        eitc_relevant_investment_income: 0
+        filer_adjusted_earnings: 5000
+        ca_eitc_qualifying_child_count: 0
+      expect: false
+    - name: "Eligible - young but has child"
+      inputs:
+        age: 17
+        state: "CA"
+        eitc_relevant_investment_income: 0
+        filer_adjusted_earnings: 5000
+        ca_eitc_qualifying_child_count: 1
+      expect: true

@@ -1,0 +1,16 @@
+# California Revenue & Taxation Code Section 17054(e)
+# Personal Exemption Credit - Blind Taxpayer
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17054.&lawCode=RTC
+
+text: """
+(e) A credit for personal exemption of fifty-two dollars ($52) if the taxpayer
+is blind on the last day of the taxable year.
+"""
+
+parameter ca_blind_exemption_base:
+  description: "Blind taxpayer credit base"
+  unit: "USD"
+  indexed_by: statute/rtc/17054/i
+  values:
+    1989-01-01: 52

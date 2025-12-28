@@ -1,0 +1,16 @@
+# California Revenue & Taxation Code Section 17054(b)
+# Personal Exemption Credit - Joint/Surviving Spouse
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17054.&lawCode=RTC
+
+text: """
+(b) A credit of one hundred four dollars ($104) for a surviving spouse or for
+married persons filing a joint return.
+"""
+
+parameter ca_personal_exemption_joint_base:
+  description: "Joint/surviving spouse personal exemption credit base"
+  unit: "USD"
+  indexed_by: statute/rtc/17054/i
+  values:
+    1989-01-01: 104

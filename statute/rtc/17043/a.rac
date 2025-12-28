@@ -1,0 +1,43 @@
+# California Revenue & Taxation Code Section 17043(a)
+# Mental Health Services Tax
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17043.&lawCode=RTC
+# Added by: Proposition 63, approved November 2, 2004
+
+text: """
+(a) For each taxable year beginning on or after January 1, 2005, in addition
+to any other taxes imposed by this part, an additional tax shall be imposed
+at the rate of 1 percent on that portion of a taxpayer's taxable income in
+excess of one million dollars ($1,000,000).
+"""
+
+# MHS tax rate - statutory value, NOT indexed
+parameter ca_mhs_rate:
+  description: "Mental Health Services Tax rate"
+  values:
+    2005-01-01: 0.01
+
+# MHS threshold - statutory value, NOT indexed per RTC 17043(c)(2)
+parameter ca_mhs_threshold:
+  description: "Income threshold for MHS Tax"
+  unit: "USD"
+  values:
+    2005-01-01: 1000000
+
+variable ca_mental_health_services_tax:
+  imports:
+    - cosilico-us:statute/26/62/a#adjusted_gross_income as federal_agi
+    - statute/rtc/17054/total#ca_standard_deduction
+  entity: TaxUnit
+  period: Year
+  dtype: Money
+  unit: "USD"
+  label: "California Mental Health Services Tax"
+  description: "1% surtax on taxable income over $1 million"
+  formula: |
+    # Note: Per RTC 17043(c)(2), the $1M threshold is NOT indexed
+    ca_taxable_income = max(0, federal_agi - ca_standard_deduction)
+
+    # 1% on income over $1 million
+    excess_income = max(0, ca_taxable_income - ca_mhs_threshold)
+    return excess_income * ca_mhs_rate

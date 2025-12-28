@@ -1,0 +1,86 @@
+# California Revenue & Taxation Code Section 17041(a)
+# Tax Rates on Individuals
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17041.&lawCode=RTC
+
+text: """
+(a)(1) There shall be imposed for each taxable year upon the entire taxable
+income of every resident of this state, except the head of a household as
+defined in Section 17042, taxes in the following amounts and at the following
+rates upon the amount of taxable income:
+
+If the taxable income is:         The tax is:
+Not over $3,650                   1% of the taxable income
+Over $3,650 but not over $8,650   $36.50 plus 2% of the excess over $3,650
+Over $8,650 but not over $13,650  $136.50 plus 4% of the excess over $8,650
+Over $13,650 but not over $18,950 $336.50 plus 6% of the excess over $13,650
+Over $18,950 but not over $23,950 $654.50 plus 8% of the excess over $18,950
+Over $23,950                      $1,054.50 plus 9.3% of the excess over $23,950
+"""
+
+# California income tax brackets
+# Thresholds are indexed annually per RTC 17041(h)
+# Base values shown here (1982); current indexed values in ftb/2024/tax_brackets.yaml
+#
+# Note: Brackets 7-9 (10.3%, 11.3%, 12.3%) were added by:
+# - Proposition 30 (2012): temporary rates on high incomes
+# - Proposition 55 (2016): extended through 2030
+parameter ca_brackets:
+  description: "California income tax brackets"
+  indexed_by: statute/rtc/17041/h
+  values:
+    # Base 1982 thresholds (indexed annually by CA CPI June-to-June)
+    # Joint thresholds are 2x per RTC 17041(d)
+    thresholds:
+      single: [0, 3650, 8650, 13650, 18950, 23950]
+      married_filing_jointly: [0, 7300, 17300, 27300, 37900, 47900]
+      married_filing_separately: [0, 3650, 8650, 13650, 18950, 23950]
+      head_of_household: [0, 7300, 17300, 27300, 37900, 47900]
+      qualifying_surviving_spouse: [0, 7300, 17300, 27300, 37900, 47900]
+    # Rates never change (statutory values)
+    rates: [0.01, 0.02, 0.04, 0.06, 0.08, 0.093]
+
+# Note: Full 9-bracket schedule (including Prop 30/55 brackets) is in
+# ftb/2024/tax_brackets.yaml which overrides this with current indexed values
+
+variable ca_income_tax:
+  imports:
+    - cosilico-us:statute/26/62/a#adjusted_gross_income as federal_agi
+    - cosilico-us:statute/26/1#filing_status
+    - statute/rtc/17054/total#ca_standard_deduction
+  entity: TaxUnit
+  period: Year
+  dtype: Money
+  unit: "USD"
+  label: "California Income Tax"
+  description: "California personal income tax"
+  formula: |
+    # Compute CA taxable income (federal AGI - CA standard deduction)
+    ca_taxable_income = max(0, federal_agi - ca_standard_deduction)
+
+    # Apply marginal tax brackets
+    # Indexed thresholds are loaded from ftb/2024/tax_brackets.yaml
+    return marginal_agg(ca_taxable_income, ca_brackets, threshold_by=filing_status)
+  tests:
+    - name: "Single filer, $50k AGI (2024)"
+      period: 2024-01
+      inputs:
+        federal_agi: 50000
+        filing_status: single
+      # Taxable = $50,000 - $5,540 = $44,460
+      # Tax = 10756*0.01 + (25499-10756)*0.02 + (40245-25499)*0.04 + (44460-40245)*0.06
+      #     = 107.56 + 294.86 + 589.84 + 252.90 = 1245.16
+      expect: 1245
+    - name: "Joint filers, $100k AGI (2024)"
+      period: 2024-01
+      inputs:
+        federal_agi: 100000
+        filing_status: married_filing_jointly
+      # Taxable = $100,000 - $11,080 = $88,920
+      # Tax on $88,920 joint
+      expect: 2629
+    - name: "Zero income"
+      inputs:
+        federal_agi: 0
+        filing_status: single
+      expect: 0

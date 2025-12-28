@@ -1,0 +1,61 @@
+# California Revenue & Taxation Code Section 17054
+# Total Personal Exemption Credit
+#
+# Combines all exemption credits from subsections (a) through (e)
+# per the introductory text of RTC 17054
+
+text: """
+There shall be allowed as credits against the taxes imposed by Section 17041
+or 17048 all of the following:
+"""
+
+variable ca_personal_exemption_credit:
+  imports:
+    - cosilico-us:statute/26/1#filing_status
+    - statute/rtc/17054/a#ca_personal_exemption_single_base
+    - statute/rtc/17054/b#ca_personal_exemption_joint_base
+    - statute/rtc/17054/c#ca_senior_exemption_base
+    - statute/rtc/17054/d#ca_dependent_exemption_base
+    - statute/rtc/17054/e#ca_blind_exemption_base
+  entity: TaxUnit
+  period: Year
+  dtype: Money
+  unit: "USD"
+  label: "California Personal Exemption Credit"
+  description: "Sum of personal exemption credits"
+  formula: |
+    # Credit amounts are indexed annually per RTC 17054(i)
+    # Actual values loaded from ftb/2024/personal_exemption_credits.yaml
+    credit = 0
+
+    # Primary exemption based on filing status
+    if filing_status == "married_filing_jointly":
+      credit = credit + ca_personal_exemption_joint
+    elif filing_status == "qualifying_surviving_spouse":
+      credit = credit + ca_personal_exemption_joint
+    else:
+      credit = credit + ca_personal_exemption_single
+
+    # Senior additional credit
+    if age >= 65:
+      credit = credit + ca_senior_exemption
+
+    # Dependent credits
+    credit = credit + n_dependents * ca_dependent_exemption
+
+    # Blind credit
+    if is_blind:
+      credit = credit + ca_blind_exemption
+
+    return credit
+
+# Standard deduction - derived from federal conformity
+# Values are published in FTB Form 540 Booklet
+parameter ca_standard_deduction:
+  description: "California standard deduction by filing status"
+  values:
+    single: 5540
+    married_filing_jointly: 11080
+    married_filing_separately: 5540
+    head_of_household: 11080
+    qualifying_surviving_spouse: 11080

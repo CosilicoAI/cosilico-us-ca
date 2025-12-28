@@ -1,0 +1,16 @@
+# California Revenue & Taxation Code Section 17054(c)
+# Personal Exemption Credit - Age 65+
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17054.&lawCode=RTC
+
+text: """
+(c) A credit of fifty-two dollars ($52) if the individual is 65 years of age
+or older on the last day of the taxable year.
+"""
+
+parameter ca_senior_exemption_base:
+  description: "Additional credit for age 65+"
+  unit: "USD"
+  indexed_by: statute/rtc/17054/i
+  values:
+    1989-01-01: 52

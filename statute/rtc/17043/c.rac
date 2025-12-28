@@ -1,0 +1,21 @@
+# California Revenue & Taxation Code Section 17043(c)
+# Exceptions to MHS Tax - No Indexing
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17043.&lawCode=RTC
+
+text: """
+(c) Notwithstanding any other provision of this part, the following shall not
+apply to the tax imposed under this section:
+
+  (1) Section 17039, relating to allowance of credits.
+
+  (2) Section 17041, relating to filing status and recomputation of the
+      income tax brackets.
+
+  (3) Section 17045, relating to joint returns.
+"""
+
+# This subsection explicitly excludes MHS tax from:
+# - Credits (17039)
+# - Bracket indexing (17041) - $1M threshold is NOT indexed
+# - Joint return rules (17045)

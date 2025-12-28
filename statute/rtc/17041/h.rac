@@ -1,0 +1,24 @@
+# California Revenue & Taxation Code Section 17041(h)
+# Annual Inflation Adjustment of Tax Brackets
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17041.&lawCode=RTC
+
+text: """
+(h)(1) For each taxable year beginning on or after January 1, 1988, the
+California Department of Industrial Relations shall transmit to the Franchise
+Tax Board the percentage change in the California Consumer Price Index for
+all items from June of the prior calendar year to June of the current calendar
+year, no later than August 1 of the current calendar year.
+
+(h)(2) The Franchise Tax Board shall do both of the following:
+  (A) Compute an inflation adjustment factor by adding 100 percent to the
+      percentage change figure that is furnished pursuant to paragraph (1)
+      and dividing the result by 100.
+  (B) Multiply the preceding taxable year's income tax brackets by the
+      inflation adjustment factor and round off the resulting amounts to
+      the nearest one dollar ($1).
+"""
+
+# This subsection defines the indexing formula, not a computed variable.
+# The FTB publishes the indexed values annually in their Form 540 Booklet.
+# Those indexed values are captured in ftb/2024/tax_brackets.yaml

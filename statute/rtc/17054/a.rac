@@ -1,0 +1,16 @@
+# California Revenue & Taxation Code Section 17054(a)
+# Personal Exemption Credit - Single/MFS/HOH
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17054.&lawCode=RTC
+
+text: """
+(a) A credit of fifty-two dollars ($52) for a single person, for a married
+person filing a separate return, and for the head of a household.
+"""
+
+parameter ca_personal_exemption_single_base:
+  description: "Single/MFS/HOH personal exemption credit base"
+  unit: "USD"
+  indexed_by: statute/rtc/17054/i
+  values:
+    1989-01-01: 52

@@ -1,0 +1,123 @@
+# California Revenue & Taxation Code Section 17052(a)
+# California Earned Income Tax Credit (CalEITC)
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17052.&lawCode=RTC
+# Added by: SB 80 (2015), expanded by subsequent legislation
+
+text: """
+(a)(1) For each taxable year beginning on or after January 1, 2015, there
+shall be allowed to an eligible individual a California earned income tax
+credit against the "net tax," as defined by Section 17039, an amount equal
+to that portion of the earned income tax credit allowed under Section 32
+of the Internal Revenue Code, determined without regard to Section 32(m)
+of the Internal Revenue Code, that is attributable to earned income
+subject to tax under this part.
+
+(a)(2)(A) The amount of the credit determined under paragraph (1) shall
+be multiplied by an earned income tax credit adjustment factor.
+
+(a)(2)(B) Unless otherwise specified in the annual Budget Act, the earned
+income tax credit adjustment factor for a taxable year beginning on or
+after January 1, 2015, shall be 0 percent.
+"""
+
+# Adjustment factor - set by annual Budget Act, currently 85%
+parameter ca_eitc_adjustment_factor:
+  description: "CalEITC adjustment factor per RTC 17052(a)(2)"
+  reference: "Budget Act sets this annually; currently 85%"
+  values:
+    2015-01-01: 0.85
+
+# Phase-in rates by number of qualifying children (base IRC 32 rates)
+# These are multiplied by adjustment_factor in the formula
+parameter ca_eitc_phase_in_rate:
+  description: "CalEITC phase-in rate by child count"
+  indexed_by: statute/rtc/17052/g
+  values:
+    thresholds: [0, 1, 2, 3]
+    rates: [0.0765, 0.34, 0.40, 0.45]
+
+# Earned income amount (phase-in ends) by child count - indexed annually
+# Base 2015 values, indexed to CA CPI
+parameter ca_eitc_earned_income_amount:
+  description: "CalEITC phase-in end amount by child count"
+  unit: "USD"
+  indexed_by: statute/rtc/17052/g
+  values:
+    thresholds: [0, 1, 2, 3]
+    amounts: [3290, 4940, 6935, 6935]
+
+# Phase-out rates (same as phase-in rates per IRC 32)
+parameter ca_eitc_phase_out_rate:
+  description: "CalEITC phase-out rate by child count"
+  indexed_by: statute/rtc/17052/g
+  values:
+    thresholds: [0, 1, 2, 3]
+    rates: [0.0765, 0.34, 0.40, 0.45]
+
+# Phase-out start amounts
+parameter ca_eitc_phase_out_start:
+  description: "CalEITC phase-out start amount by child count"
+  unit: "USD"
+  indexed_by: statute/rtc/17052/g
+  values:
+    thresholds: [0, 1, 2, 3]
+    amounts: [3290, 4940, 6935, 6935]
+
+variable ca_eitc:
+  imports:
+    - statute/rtc/17052/c#ca_eitc_qualifying_child_count
+    - statute/rtc/17052/b#ca_eitc_eligible
+  entity: TaxUnit
+  period: Year
+  dtype: Money
+  unit: "USD"
+  label: "California Earned Income Tax Credit"
+  description: "CalEITC per RTC 17052"
+  formula: |
+    # Get earned income and child count
+    earned_income = filer_adjusted_earnings
+    child_count = min(ca_eitc_qualifying_child_count, 3)
+
+    # Look up rates and thresholds for this child count
+    phase_in_rate = ca_eitc_phase_in_rate[child_count] * ca_eitc_adjustment_factor
+    earned_income_amount = ca_eitc_earned_income_amount[child_count]
+    phase_out_rate = ca_eitc_phase_out_rate[child_count] * ca_eitc_adjustment_factor
+    phase_out_start = ca_eitc_phase_out_start[child_count]
+
+    # Phase-in: credit increases with income up to earned_income_amount
+    phase_in_income = min(earned_income, earned_income_amount)
+    max_credit = phase_in_income * phase_in_rate
+
+    # Phase-out: credit decreases for income above phase_out_start
+    phase_out_income = max(0, earned_income - phase_out_start)
+    phase_out_reduction = phase_out_income * phase_out_rate
+
+    # Credit = phase-in amount minus phase-out reduction, but not below 0
+    credit = max(0, max_credit - phase_out_reduction)
+
+    # Only if eligible
+    return ca_eitc_eligible * credit
+  tests:
+    - name: "Single, no children, $3000 earned income"
+      period: 2024-01
+      inputs:
+        filer_adjusted_earnings: 3000
+        ca_eitc_qualifying_child_count: 0
+        ca_eitc_eligible: true
+      # $3000 × 0.0765 × 0.85 = $195.08
+      expect: 195
+    - name: "Single, 1 child, $5000 earned income"
+      period: 2024-01
+      inputs:
+        filer_adjusted_earnings: 5000
+        ca_eitc_qualifying_child_count: 1
+        ca_eitc_eligible: true
+      # Complex calculation - at phase-out
+      expect: 1427
+    - name: "Not eligible"
+      inputs:
+        filer_adjusted_earnings: 5000
+        ca_eitc_qualifying_child_count: 1
+        ca_eitc_eligible: false
+      expect: 0

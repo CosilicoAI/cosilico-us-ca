@@ -1,0 +1,16 @@
+# California Revenue & Taxation Code Section 17054(d)
+# Personal Exemption Credit - Dependents
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17054.&lawCode=RTC
+
+text: """
+(d)(1) A credit of two hundred twenty-seven dollars ($227) for each dependent
+who meets the requirements of Section 151(c) of the Internal Revenue Code.
+"""
+
+parameter ca_dependent_exemption_base:
+  description: "Dependent credit base"
+  unit: "USD"
+  indexed_by: statute/rtc/17054/i
+  values:
+    1989-01-01: 227
