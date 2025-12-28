@@ -42,17 +42,17 @@ variable ca_net_tax:
     return gross_tax - total_credits
   tests:
     - name: "Low income - credits exceed tax (refund)"
-      period: 2024-01
+      period: 2019-01
       inputs:
         ca_income_tax: 200
         ca_mental_health_services_tax: 0
         ca_eitc: 500
-        ca_yctc: 1154
-      # Gross = $200, Credits = $1,654
-      # Net = $200 - $1,654 = -$1,454 (refund)
-      expect: -1454
+        ca_yctc: 1000
+      # Gross = $200, Credits = $1,500
+      # Net = $200 - $1,500 = -$1,300 (refund)
+      expect: -1300
     - name: "Middle income - no credits"
-      period: 2024-01
+      period: 2019-01
       inputs:
         ca_income_tax: 3500
         ca_mental_health_services_tax: 0
@@ -60,7 +60,7 @@ variable ca_net_tax:
         ca_yctc: 0
       expect: 3500
     - name: "High income - with MHS tax"
-      period: 2024-01
+      period: 2019-01
       inputs:
         ca_income_tax: 120000
         ca_mental_health_services_tax: 5000
