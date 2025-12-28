@@ -1,0 +1,21 @@
+# California Revenue & Taxation Code Section 17052(g)
+# CalEITC Inflation Adjustment
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17052.&lawCode=RTC
+
+text: """
+(g)(1) For each taxable year beginning on or after January 1, 2016, the
+Franchise Tax Board shall recompute the amounts in subdivision (b) in the
+same manner as provided in subdivision (h) of Section 17041.
+
+(g)(2) The changes made by subdivision (a) of Section 2 of the act adding
+this subdivision shall apply to taxable years beginning on or after
+January 1, 2018. For the 2018 taxable year, the percentage change figure
+furnished pursuant to paragraph (1) of subdivision (h) of Section 17041
+shall be increased by 7 percent. For the 2019 taxable year, that percentage
+change figure shall be increased by 3 percent.
+"""
+
+# This subsection establishes that CalEITC thresholds are indexed
+# using the same CA CPI methodology as RTC 17041(h)
+# Indexed values are published in FTB Form 3514 instructions annually

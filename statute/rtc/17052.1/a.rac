@@ -1,0 +1,134 @@
+# California Revenue & Taxation Code Section 17052.1(a)
+# Young Child Tax Credit (YCTC)
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17052.1.&lawCode=RTC
+# Added by: AB 1905 (2019)
+
+text: """
+(a)(1) For each taxable year beginning on or after January 1, 2019, there
+shall be allowed to a qualified taxpayer a young child tax credit against
+the "net tax," as defined in Section 17039.
+
+(a)(2)(A)(i) The amount of the credit shall be one thousand one hundred
+seventy-six dollars ($1,176) multiplied by the earned income tax credit
+adjustment factor for the taxable year.
+
+(a)(2)(A)(ii) For each taxable year beginning on or after January 1, 2023,
+the amounts specified in clause (i) shall be recomputed in the manner
+provided in subdivision (h) of Section 17041.
+
+(a)(2)(B) A qualified taxpayer may claim this credit for each qualifying
+child who has not attained six years of age as of the last day of that
+taxable year for which a credit is allowed under Section 17052.
+
+(a)(2)(C)(i) The credit amount shall be reduced by an amount equal to the
+credit amount divided by seven thousand five hundred dollars ($7,500),
+multiplied by the excess of the earned income of the qualified taxpayer
+for the taxable year over twenty-five thousand dollars ($25,000).
+
+(a)(2)(C)(ii) For each taxable year beginning on or after January 1, 2023,
+the amounts specified in clause (i) shall be recomputed in the manner
+provided in subdivision (h) of Section 17041.
+"""
+
+# YCTC base amount (× 0.85 adjustment factor = indexed amount)
+# Statute says $1,176 × adjustment factor
+parameter ca_yctc_base_amount:
+  description: "YCTC base amount per RTC 17052.1(a)(2)(A)"
+  unit: "USD"
+  values:
+    2019-01-01: 1176
+
+# YCTC effective amount after adjustment (indexed from 2023)
+parameter ca_yctc_amount:
+  description: "YCTC credit amount (after adjustment)"
+  unit: "USD"
+  indexed_by: statute/rtc/17041/h
+  values:
+    2021-01-01: 1000
+    2022-01-01: 1083
+    2023-01-01: 1117
+    2024-01-01: 1154
+
+# Maximum age for qualifying young child
+parameter ca_yctc_max_age:
+  description: "Maximum age for YCTC (under this age)"
+  values:
+    2019-01-01: 6
+
+# Phase-out start
+parameter ca_yctc_phase_out_start:
+  description: "YCTC phase-out start income"
+  unit: "USD"
+  indexed_by: statute/rtc/17041/h
+  values:
+    2019-01-01: 25000
+    2023-01-01: 25775
+    2024-01-01: 26626
+
+# Phase-out range
+parameter ca_yctc_phase_out_range:
+  description: "YCTC phase-out income range"
+  unit: "USD"
+  indexed_by: statute/rtc/17041/h
+  values:
+    2019-01-01: 7500
+
+variable ca_yctc:
+  imports:
+    - statute/rtc/17052/a#ca_eitc
+    - statute/rtc/17052/b#ca_eitc_eligible
+    - statute/rtc/17052/c#ca_eitc_qualifying_child_count
+  entity: TaxUnit
+  period: Year
+  dtype: Money
+  unit: "USD"
+  label: "California Young Child Tax Credit"
+  description: "YCTC per RTC 17052.1"
+  formula: |
+    # Must have a CalEITC-qualifying child under age 6
+    has_young_child = any(Person.age < ca_yctc_max_age & Person.ca_is_qualifying_child_for_caleitc)
+
+    # Must receive CalEITC or be CalEITC eligible with limited losses
+    gets_caleitc = ca_eitc > 0
+    is_caleitc_eligible = ca_eitc_eligible
+
+    # Eligibility: young child + CalEITC recipient (or eligible with losses)
+    eligible = has_young_child & (gets_caleitc | is_caleitc_eligible)
+
+    # Phase-out calculation
+    earned_income = filer_adjusted_earnings
+    excess_income = max(0, earned_income - ca_yctc_phase_out_start)
+    reduction_rate = ca_yctc_amount / ca_yctc_phase_out_range
+    reduction = excess_income * reduction_rate
+
+    credit = max(0, ca_yctc_amount - reduction)
+
+    return eligible * credit
+  tests:
+    - name: "Eligible with young child, low income"
+      period: 2024-01
+      inputs:
+        has_young_child: true
+        ca_eitc: 500
+        filer_adjusted_earnings: 20000
+      # Full credit $1,154
+      expect: 1154
+    - name: "Phase-out applies"
+      period: 2024-01
+      inputs:
+        has_young_child: true
+        ca_eitc: 500
+        filer_adjusted_earnings: 30000
+      # Excess = $30k - $26,626 = $3,374
+      # Reduction = $3,374 × ($1,154/$7,500) = $519
+      # Credit = $1,154 - $519 = $635
+      expect: 635
+    - name: "Not eligible - no CalEITC"
+      period: 2024-01
+      inputs:
+        has_young_child: true
+        ca_eitc: 0
+        ca_eitc_eligible: false
+        filer_adjusted_earnings: 5000
+      expect: 0

@@ -1,0 +1,77 @@
+# California Revenue & Taxation Code Section 17039
+# Definition of "Net Tax"
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17039.&lawCode=RTC
+
+text: """
+(a) For purposes of computing any credit provided in this part, the term "net
+tax" means the tax imposed under this part for the taxable year, reduced by
+the credits allowed by this part.
+
+(b) The "net tax" for any taxable year shall be the tax imposed by this part
+reduced by the sum of the following credits:
+(1) The credit provided by Section 17054 (personal exemption credit).
+(2) The credit provided by Section 17052 (California earned income tax credit).
+(3) The credit provided by Section 17052.1 (young child tax credit).
+"""
+
+# This variable computes the total California state income tax liability
+# after applying all credits against the gross tax (income tax + MHS tax)
+
+variable ca_net_tax:
+  imports:
+    - statute/rtc/17041/a#ca_income_tax
+    - statute/rtc/17043/a#ca_mental_health_services_tax
+    - statute/rtc/17052/a#ca_eitc
+    - statute/rtc/17052.1/a#ca_yctc
+  entity: TaxUnit
+  period: Year
+  dtype: Money
+  unit: "USD"
+  label: "California Net Tax"
+  description: "Total CA income tax liability after all credits (per RTC 17039)"
+  formula: |
+    # Gross tax = regular income tax + Mental Health Services Tax
+    gross_tax = ca_income_tax + ca_mental_health_services_tax
+
+    # Total credits (refundable)
+    # Note: CalEITC and YCTC are refundable credits
+    total_credits = ca_eitc + ca_yctc
+
+    # Net tax (can be negative for refundable credits)
+    return gross_tax - total_credits
+  tests:
+    - name: "Low income - credits exceed tax (refund)"
+      period: 2024-01
+      inputs:
+        ca_income_tax: 200
+        ca_mental_health_services_tax: 0
+        ca_eitc: 500
+        ca_yctc: 1154
+      # Gross = $200, Credits = $1,654
+      # Net = $200 - $1,654 = -$1,454 (refund)
+      expect: -1454
+    - name: "Middle income - no credits"
+      period: 2024-01
+      inputs:
+        ca_income_tax: 3500
+        ca_mental_health_services_tax: 0
+        ca_eitc: 0
+        ca_yctc: 0
+      expect: 3500
+    - name: "High income - with MHS tax"
+      period: 2024-01
+      inputs:
+        ca_income_tax: 120000
+        ca_mental_health_services_tax: 5000
+        ca_eitc: 0
+        ca_yctc: 0
+      # Gross = $125,000, Credits = $0
+      expect: 125000
+    - name: "Zero income"
+      inputs:
+        ca_income_tax: 0
+        ca_mental_health_services_tax: 0
+        ca_eitc: 0
+        ca_yctc: 0
+      expect: 0

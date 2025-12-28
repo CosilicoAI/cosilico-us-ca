@@ -1,0 +1,80 @@
+# California Revenue & Taxation Code Section 17052(c)
+# CalEITC Qualifying Child Definition
+#
+# Source: https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17052.&lawCode=RTC
+
+text: """
+(c) For purposes of this section, a "qualifying child" means a qualifying
+child, as defined in Section 32(c)(3) of the Internal Revenue Code, with
+the following modifications:
+
+(1) The term "place of abode" in Section 32(c)(3)(A)(ii) of the Internal
+Revenue Code is modified by substituting "this state" for "the United
+States."
+
+(2) The age limitation in Section 32(c)(3)(C) of the Internal Revenue
+Code shall be modified so that a qualifying child includes an individual
+who has not attained the age of 18 as of the close of the taxable year.
+"""
+
+# CalEITC uses age 18 cutoff (vs federal 19)
+parameter ca_eitc_qualifying_child_max_age:
+  description: "Maximum age for CalEITC qualifying child"
+  values:
+    2015-01-01: 18
+
+variable ca_is_qualifying_child_for_caleitc:
+  imports:
+    - cosilico-us:statute/26/152/c#is_qualifying_child
+  entity: Person
+  period: Year
+  dtype: Boolean
+  label: "Is Qualifying Child for CalEITC"
+  description: "Whether person qualifies as a child for CalEITC purposes"
+  formula: |
+    # Must meet federal qualifying child definition (IRC 152(c))
+    # with California modifications:
+    # - Age under 18 (not 19 like federal)
+    # - Principal place of abode in California (not just US)
+    federal_qualifying = is_qualifying_child
+    under_age_limit = age < ca_eitc_qualifying_child_max_age
+    ca_resident = state == "CA"
+
+    return federal_qualifying & under_age_limit & ca_resident
+  tests:
+    - name: "Qualifying child under 18"
+      inputs:
+        age: 10
+        is_qualifying_child: true
+        state: "CA"
+      expect: true
+    - name: "Child 18 - too old for CalEITC"
+      inputs:
+        age: 18
+        is_qualifying_child: true
+        state: "CA"
+      expect: false
+    - name: "Not in California"
+      inputs:
+        age: 10
+        is_qualifying_child: true
+        state: "TX"
+      expect: false
+
+variable ca_eitc_qualifying_child_count:
+  entity: TaxUnit
+  period: Year
+  dtype: Integer
+  label: "CalEITC Qualifying Child Count"
+  description: "Number of qualifying children for CalEITC"
+  formula: |
+    return sum(Person.ca_is_qualifying_child_for_caleitc)
+  tests:
+    - name: "Two qualifying children"
+      inputs:
+        ca_is_qualifying_child_for_caleitc: [true, true, false]
+      expect: 2
+    - name: "No qualifying children"
+      inputs:
+        ca_is_qualifying_child_for_caleitc: [false, false]
+      expect: 0
