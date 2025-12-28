@@ -72,7 +72,7 @@ variable ca_yctc:
   unit: "USD"
   label: "California Young Child Tax Credit"
   description: "YCTC per RTC 17052.1"
-  formula: |
+  formula:
     # Must have a CalEITC-qualifying child under age 6
     has_young_child = any(Person.age < ca_yctc_max_age & Person.ca_is_qualifying_child_for_caleitc)
 

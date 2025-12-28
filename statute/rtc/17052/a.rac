@@ -74,7 +74,7 @@ variable ca_eitc:
   unit: "USD"
   label: "California Earned Income Tax Credit"
   description: "CalEITC per RTC 17052"
-  formula: |
+  formula:
     # Get earned income and child count
     earned_income = filer_adjusted_earnings
     child_count = min(ca_eitc_qualifying_child_count, 3)

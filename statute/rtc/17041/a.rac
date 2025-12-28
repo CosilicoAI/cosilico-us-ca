@@ -48,7 +48,7 @@ variable ca_income_tax:
   unit: "USD"
   label: "California Income Tax"
   description: "California personal income tax"
-  formula: |
+  formula:
     # Compute CA taxable income (federal AGI - CA standard deduction)
     ca_taxable_income = max(0, federal_agi - ca_standard_deduction)
 

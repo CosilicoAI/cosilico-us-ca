@@ -31,7 +31,7 @@ variable ca_net_tax:
   unit: "USD"
   label: "California Net Tax"
   description: "Total CA income tax liability after all credits (per RTC 17039)"
-  formula: |
+  formula:
     # Gross tax = regular income tax + Mental Health Services Tax
     gross_tax = ca_income_tax + ca_mental_health_services_tax
 

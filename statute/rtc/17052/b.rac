@@ -53,7 +53,7 @@ variable ca_eitc_eligible:
   dtype: Boolean
   label: "CalEITC Eligible"
   description: "Whether tax unit is eligible for CalEITC"
-  formula: |
+  formula:
     # Age requirement: 18+ or has qualifying child
     has_qualifying_child = ca_eitc_qualifying_child_count > 0
     meets_age_requirement = (age >= ca_eitc_min_age) | has_qualifying_child

@@ -23,7 +23,7 @@ variable ca_personal_exemption_credit:
   unit: "USD"
   label: "California Personal Exemption Credit"
   description: "Sum of personal exemption credits"
-  formula: |
+  formula:
     credit = 0
 
     # Primary exemption based on filing status

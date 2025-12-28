@@ -34,7 +34,7 @@ variable ca_mental_health_services_tax:
   unit: "USD"
   label: "California Mental Health Services Tax"
   description: "1% surtax on taxable income over $1 million"
-  formula: |
+  formula:
     # Per RTC 17043(c)(2), the $1M threshold is NOT indexed
     ca_taxable_income = max(0, federal_agi - ca_standard_deduction)
 

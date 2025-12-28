@@ -31,7 +31,7 @@ variable ca_is_qualifying_child_for_caleitc:
   dtype: Boolean
   label: "Is Qualifying Child for CalEITC"
   description: "Whether person qualifies as a child for CalEITC purposes"
-  formula: |
+  formula:
     # Must meet federal qualifying child definition (IRC 152(c))
     # with California modifications:
     # - Age under 18 (not 19 like federal)
@@ -67,7 +67,7 @@ variable ca_eitc_qualifying_child_count:
   dtype: Integer
   label: "CalEITC Qualifying Child Count"
   description: "Number of qualifying children for CalEITC"
-  formula: |
+  formula:
     return sum(Person.ca_is_qualifying_child_for_caleitc)
   tests:
     - name: "Two qualifying children"
